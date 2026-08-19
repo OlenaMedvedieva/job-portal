@@ -1,8 +1,8 @@
 require("dotenv").config();
-
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
 
 const app = express();
@@ -15,9 +15,47 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: Number(process.env.DB_PORT),
 });
+pool.query(`
+  CREATE TABLE IF NOT EXISTS jobs (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    company VARCHAR(255) NOT NULL,
+    location VARCHAR(255),
+    description TEXT,
+    salary VARCHAR(100),
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).then(() => {
+  console.log("Jobs table is ready");
+}).catch((error) => {
+  console.error("Jobs table error:", error);
+});
+
 
 app.use(cors());
 app.use(express.json());
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({
+      message: "Access token is required",
+    });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (error, user) => {
+    if (error) {
+      return res.status(403).json({
+        message: "Invalid or expired token",
+      });
+    }
+
+    req.user = user;
+    next();
+  });
+};
 
 app.get("/", (req, res) => {
   res.json({
@@ -85,6 +123,166 @@ app.post("/register", async (req, res) => {
     });
   }
 });
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required",
+      });
+    }
+
+    const result = await pool.query(
+      "SELECT id, name, email, password_hash FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const user = result.rows[0];
+
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
+    if (!passwordMatch) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+
+    res.status(500).json({
+      message: "Login failed",
+    });
+  }
+});
+
+app.get("/profile", authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, name, email, created_at FROM users WHERE id = $1",
+      [req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Profile error:", error);
+
+    res.status(500).json({
+      message: "Failed to load profile",
+    });
+  }
+});
+app.post("/jobs", authenticateToken, async (req, res) => {
+  try {
+    const {
+      title,
+      company,
+      location,
+      description,
+      salary,
+    } = req.body;
+
+    if (!title || !company) {
+      return res.status(400).json({
+        message: "Title and company are required",
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO jobs
+       (title, company, location, description, salary, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, title, company, location, description, salary, user_id, created_at`,
+      [
+        title,
+        company,
+        location || null,
+        description || null,
+        salary || null,
+        req.user.id,
+      ]
+    );
+
+    res.status(201).json({
+      message: "Job created successfully",
+      job: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Create job error:", error);
+
+    res.status(500).json({
+      message: "Failed to create job",
+    });
+  }
+});
+
+app.get("/jobs", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+        jobs.id,
+        jobs.title,
+        jobs.company,
+        jobs.location,
+        jobs.description,
+        jobs.salary,
+        jobs.created_at,
+        users.name AS author
+       FROM jobs
+       LEFT JOIN users ON jobs.user_id = users.id
+       ORDER BY jobs.created_at DESC`
+    );
+
+    res.json({
+      jobs: result.rows,
+    });
+  } catch (error) {
+    console.error("Get jobs error:", error);
+
+    res.status(500).json({
+      message: "Failed to load jobs",
+    });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Job Portal API running on http://localhost:${PORT}`);

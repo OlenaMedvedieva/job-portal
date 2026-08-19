@@ -1,0 +1,141 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  padding: 35px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  margin: 0;
+}
+
+.subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.tabs {
+  display: flex;
+  margin-bottom: 25px;
+}
+
+.tabs button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: #eee;
+  cursor: pointer;
+}
+
+.tabs button.active {
+  background: #222;
+  color: white;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-weight: 600;
+}
+
+input {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.submit-button {
+  background: #222;
+  color: white;
+}
+
+.profile {
+  text-align: center;
+}
+
+.profile button {
+  width: 100%;
+  margin-top: 12px;
+  background: #222;
+  color: white;
+}
+
+.profile .logout {
+  background: #777;
+}
+
+.message {
+  margin-top: 20px;
+  text-align: center;
+  color: #333;
+}
+.job-form {
+  margin-top: 25px;
+  padding-top: 25px;
+  border-top: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.job-form textarea {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.jobs {
+  margin-top: 30px;
+}
+
+.job-card {
+  margin-top: 15px;
+  padding: 18px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.job-card h3 {
+  margin-top: 0;
+}
