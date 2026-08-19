@@ -11,6 +11,7 @@ function App() {
   const [message, setMessage] = useState("");
   const [user, setUser] = useState(null);
   const [jobs, setJobs] = useState([]);
+  const [selectedJob, setSelectedJob] = useState(null);
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJobId, setEditingJobId] = useState(null);
   const [jobTitle, setJobTitle] = useState("");
@@ -108,6 +109,23 @@ function App() {
       setMessage("Cannot connect to the server");
     }
   }; 
+const viewJobDetails = async (jobId) => {
+  try {
+    const response = await fetch(`${API_URL}/jobs/${jobId}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.message || "Failed to load job");
+      return;
+    }
+
+    setSelectedJob(data.job);
+  } catch (error) {
+    console.error(error);
+    setMessage("Cannot connect to the server");
+  }
+};
+
   const deleteJob = async (jobId) => {
     const token = localStorage.getItem("token");
 
@@ -416,6 +434,10 @@ function App() {
                     <small>
                       Posted by: {job.author}
                     </small>
+                   <button onClick={() => viewJobDetails(job.id)}>
+                    View Details
+                     </button>
+
            {user && job.author === user.name && ( 
                   <div className="job-actions">
                   <button onClick={() => startEditJob(job)}>
@@ -437,6 +459,35 @@ function App() {
             )}
           </>
         )}
+        {selectedJob && (
+  <section className="job-details">
+    <h2>{selectedJob.title}</h2>
+
+    <p>
+      <strong>Company:</strong> {selectedJob.company}
+    </p>
+
+    <p>
+      <strong>Location:</strong> {selectedJob.location}
+    </p>
+
+    <p>
+      <strong>Salary:</strong> {selectedJob.salary}
+    </p>
+
+    <p>{selectedJob.description}</p>
+
+    <small>
+      Posted by: {selectedJob.author}
+    </small>
+
+    <br />
+
+    <button onClick={() => setSelectedJob(null)}>
+      Close
+    </button>
+  </section>
+)}
 
         {message && <p className="message">{message}</p>}
       </div>
