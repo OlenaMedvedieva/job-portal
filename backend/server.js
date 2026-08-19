@@ -283,6 +283,94 @@ app.get("/jobs", async (req, res) => {
   }
 });
 
+app.put("/jobs/:id", authenticateToken, async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    const {
+      title,
+      company,
+      location,
+      description,
+      salary,
+    } = req.body;
+
+    if (!title || !company) {
+      return res.status(400).json({
+        message: "Title and company are required",
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE jobs
+       SET
+         title = $1,
+         company = $2,
+         location = $3,
+         description = $4,
+         salary = $5
+       WHERE id = $6 AND user_id = $7
+       RETURNING id, title, company, location, description, salary, user_id, created_at`,
+      [
+        title,
+        company,
+        location || null,
+        description || null,
+        salary || null,
+        jobId,
+        req.user.id,
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Job not found or you are not the owner",
+      });
+    }
+
+    res.json({
+      message: "Job updated successfully",
+      job: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Update job error:", error);
+
+    res.status(500).json({
+      message: "Failed to update job",
+    });
+  }
+});
+
+app.delete("/jobs/:id", authenticateToken, async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    const result = await pool.query(
+      `DELETE FROM jobs
+       WHERE id = $1 AND user_id = $2
+       RETURNING id, title, company`,
+      [jobId, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Job not found or you are not the owner",
+      });
+    }
+
+    res.json({
+      message: "Job deleted successfully",
+      job: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Delete job error:", error);
+
+    res.status(500).json({
+      message: "Failed to delete job",
+    });
+  }
+});
+
 
 app.listen(PORT, () => {
   console.log(`Job Portal API running on http://localhost:${PORT}`);

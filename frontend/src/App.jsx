@@ -12,12 +12,12 @@ function App() {
   const [user, setUser] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [showJobForm, setShowJobForm] = useState(false);
-
-const [jobTitle, setJobTitle] = useState("");
-const [jobCompany, setJobCompany] = useState("");
-const [jobLocation, setJobLocation] = useState("");
-const [jobSalary, setJobSalary] = useState("");
-const [jobDescription, setJobDescription] = useState("");
+  const [editingJobId, setEditingJobId] = useState(null);
+  const [jobTitle, setJobTitle] = useState("");
+  const [jobCompany, setJobCompany] = useState("");
+  const [jobLocation, setJobLocation] = useState("");
+  const [jobSalary, setJobSalary] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -107,8 +107,58 @@ const [jobDescription, setJobDescription] = useState("");
       console.error(error);
       setMessage("Cannot connect to the server");
     }
+  }; 
+  const deleteJob = async (jobId) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setMessage("You are not logged in");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this job?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/jobs/${jobId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.message || "Failed to delete job");
+        return;
+      }
+
+      setMessage("Job deleted successfully");
+
+      await loadJobs();
+    } catch (error) {
+      console.error(error);
+      setMessage("Cannot connect to the server");
+    }
   };
 
+  const startEditJob = (job) => {
+    setEditingJobId(job.id);
+
+    setJobTitle(job.title);
+    setJobCompany(job.company);
+    setJobLocation(job.location || "");
+    setJobSalary(job.salary || "");
+    setJobDescription(job.description || "");
+
+    setShowJobForm(true);
+  };
   const createJob = async (event) => {
   event.preventDefault();
 
@@ -119,30 +169,41 @@ const [jobDescription, setJobDescription] = useState("");
     return;
   }
 
+  const isEditing = editingJobId !== null;
+
   try {
-    const response = await fetch(`${API_URL}/jobs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        title: jobTitle,
-        company: jobCompany,
-        location: jobLocation,
-        salary: jobSalary,
-        description: jobDescription,
-      }),
-    });
+    const response = await fetch(
+      isEditing
+        ? `${API_URL}/jobs/${editingJobId}`
+        : `${API_URL}/jobs`,
+      {
+        method: isEditing ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: jobTitle,
+          company: jobCompany,
+          location: jobLocation,
+          salary: jobSalary,
+          description: jobDescription,
+        }),
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      setMessage(data.message || "Failed to create job");
+      setMessage(data.message || "Failed to save job");
       return;
     }
 
-    setMessage("Job created successfully");
+    setMessage(
+      isEditing
+        ? "Job updated successfully"
+        : "Job created successfully"
+    );
 
     setJobTitle("");
     setJobCompany("");
@@ -150,6 +211,7 @@ const [jobDescription, setJobDescription] = useState("");
     setJobSalary("");
     setJobDescription("");
 
+    setEditingJobId(null);
     setShowJobForm(false);
 
     await loadJobs();
@@ -158,7 +220,6 @@ const [jobDescription, setJobDescription] = useState("");
     setMessage("Cannot connect to the server");
   }
 };
-
   const logout = () => {
     localStorage.removeItem("token");
     setUser(null);
@@ -249,10 +310,22 @@ const [jobDescription, setJobDescription] = useState("");
               <button onClick={loadJobs}>
                 Load jobs
               </button>
+              <button
+               onClick={() => {
+                setShowJobForm(!showJobForm);
 
-               <button onClick={() => setShowJobForm(!showJobForm)}>
-               {showJobForm ? "Cancel" : "Create job"}
-               </button>
+                  if (showJobForm) {
+                  setEditingJobId(null);
+                   setJobTitle("");
+                   setJobCompany("");
+                   setJobLocation("");
+                      setJobSalary("");
+                 setJobDescription("");
+                                   }
+                                 }}
+                                      >
+                      {showJobForm ? "Cancel" : "Create job"}
+                   </button>
               <button onClick={logout} className="logout">
                 Logout
               </button>
@@ -260,8 +333,7 @@ const [jobDescription, setJobDescription] = useState("");
 
           {showJobForm && (
   <form className="job-form" onSubmit={createJob}>
-    <h2>Create New Job</h2>
-
+<h2>{editingJobId ? "Edit Job" : "Create New Job"}</h2>
     <label>
       Job title
       <input
@@ -315,7 +387,7 @@ const [jobDescription, setJobDescription] = useState("");
     </label>
 
     <button type="submit" className="submit-button">
-      Create Job
+      {editingJobId ? "Update Job" : "Create Job"}
     </button>
   </form>
 )}
@@ -344,6 +416,21 @@ const [jobDescription, setJobDescription] = useState("");
                     <small>
                       Posted by: {job.author}
                     </small>
+           {user && job.author === user.name && ( 
+                  <div className="job-actions">
+                  <button onClick={() => startEditJob(job)}>
+                Edit
+                </button>
+
+                  <button
+                      onClick={() => deleteJob(job.id)}
+                         className="delete-button"
+                      >
+                   Delete
+             </button>
+            </div>
+           )}
+
                   </article>
                 ))}
               </section>
