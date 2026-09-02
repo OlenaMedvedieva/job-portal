@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 const API_URL = "http://localhost:3000";
@@ -19,6 +19,37 @@ function App() {
   const [jobLocation, setJobLocation] = useState("");
   const [jobSalary, setJobSalary] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    const restoreUser = async () => {
+      try {
+        const response = await fetch(`${API_URL}/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          localStorage.removeItem("token");
+          return;
+        }
+
+        setUser(data.user);
+      } catch (error) {
+        console.error("Restore user error:", error);
+      }
+    };
+
+    restoreUser();
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
