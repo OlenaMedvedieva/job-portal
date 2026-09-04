@@ -12,18 +12,20 @@ function Profile({
   setJobDescription,
   logout,
 }) {
-  const handleJobFormToggle = () => {
-    setShowJobForm(!showJobForm);
+ const handleJobFormToggle = () => {
+  if (showJobForm) {
+    setShowJobForm(false);
+    return;
+  }
 
-    if (showJobForm) {
-      setEditingJobId(null);
-      setJobTitle("");
-      setJobCompany("");
-      setJobLocation("");
-      setJobSalary("");
-      setJobDescription("");
-    }
-  };
+  setEditingJobId(null);
+  setJobTitle("");
+  setJobCompany("");
+  setJobLocation("");
+  setJobSalary("");
+  setJobDescription("");
+  setShowJobForm(true);
+};
 
   return (
     <div className="profile">
