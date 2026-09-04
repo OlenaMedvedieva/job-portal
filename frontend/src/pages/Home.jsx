@@ -181,32 +181,17 @@ const deleteJob = async (jobId) => {
   const isEditing = editingJobId !== null;
 
   try {
-    const response = await fetch(
-      isEditing
-        ? `${API_URL}/jobs/${editingJobId}`
-        : `${API_URL}/jobs`,
+    await saveJob(
+      editingJobId,
       {
-        method: isEditing ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          title: jobTitle,
-          company: jobCompany,
-          location: jobLocation,
-          salary: jobSalary,
-          description: jobDescription,
-        }),
-      }
+        title: jobTitle,
+        company: jobCompany,
+        location: jobLocation,
+        salary: jobSalary,
+        description: jobDescription,
+      },
+      token
     );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      setMessage(data.message || "Failed to save job");
-      return;
-    }
 
     setMessage(
       isEditing
@@ -226,15 +211,9 @@ const deleteJob = async (jobId) => {
     await loadJobs();
   } catch (error) {
     console.error(error);
-    setMessage("Cannot connect to the server");
+    setMessage(error.message || "Cannot connect to the server");
   }
 };
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    setJobs([]);
-    setMessage("You have been logged out");
-  };
 
   return (
     <main className="app">

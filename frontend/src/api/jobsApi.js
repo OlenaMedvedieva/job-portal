@@ -41,3 +41,28 @@ export const deleteJob = async (jobId, token) => {
 
   return data;
 };
+export const saveJob = async (jobId, jobData, token) => {
+  const isEditing = jobId !== null;
+
+  const response = await fetch(
+    isEditing
+      ? `${API_URL}/jobs/${jobId}`
+      : `${API_URL}/jobs`,
+    {
+      method: isEditing ? "PUT" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(jobData),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to save job");
+  }
+
+  return data;
+};
