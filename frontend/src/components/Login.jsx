@@ -1,27 +1,12 @@
-function AuthForm({
-  mode,
-  name,
+function Login({
   email,
   password,
-  setName,
   setEmail,
   setPassword,
   handleSubmit,
 }) {
   return (
     <form onSubmit={handleSubmit}>
-      {mode === "register" && (
-        <label>
-          Name
-          <input
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Your name"
-          />
-        </label>
-      )}
-
       <label>
         Email
         <input
@@ -45,10 +30,10 @@ function AuthForm({
       </label>
 
       <button className="submit-button" type="submit">
-        {mode === "login" ? "Login" : "Create account"}
+        Login
       </button>
     </form>
   );
 }
 
-export default AuthForm;
+export default Login;

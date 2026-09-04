@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate , Link } from "react-router-dom";
-import AuthForm from "../components/AuthForm.jsx";
+import Login from "../components/Login.jsx";
+import Register from "../components/Register.jsx";
 import JobList from "../components/JobList.jsx";
 import JobForm from "../components/JobForm.jsx";
 import Profile from "../components/Profile.jsx";
@@ -245,16 +246,25 @@ const deleteJob = async (jobId) => {
               </button>
             </div>
 
-            <AuthForm
-  mode={mode}
-  name={name}
-  email={email}
-  password={password}
-  setName={setName}
-  setEmail={setEmail}
-  setPassword={setPassword}
-  handleSubmit={handleSubmit}
-/>
+           {mode === "login" ? (
+  <Login
+    email={email}
+    password={password}
+    setEmail={setEmail}
+    setPassword={setPassword}
+    handleSubmit={handleSubmit}
+  />
+) : (
+  <Register
+    name={name}
+    email={email}
+    password={password}
+    setName={setName}
+    setEmail={setEmail}
+    setPassword={setPassword}
+    handleSubmit={handleSubmit}
+  />
+)}
           </>
         ) : (
           <>
