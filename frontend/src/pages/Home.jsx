@@ -7,7 +7,6 @@ import Register from "../components/Register.jsx";
 import JobList from "../components/JobList.jsx";
 import JobForm from "../components/JobForm.jsx";
 import Profile from "../components/Profile.jsx";
-import { API_URL, getJobs, getProfile,deleteJob as deleteJobApi, saveJob } from "../api/jobsApi";
 import "../App.css";
 
 
@@ -24,11 +23,13 @@ const {
   jobCompany,
   jobLocation,
   jobSalary,
+  jobCurrency,
   jobDescription,
   setJobTitle,
   setJobCompany,
   setJobLocation,
   setJobSalary,
+  setJobCurrency,
   setJobDescription,
   loadJobs,
   deleteJob,
@@ -130,11 +131,13 @@ const {
     jobCompany={jobCompany}
     jobLocation={jobLocation}
     jobSalary={jobSalary}
+     jobCurrency={jobCurrency}
     jobDescription={jobDescription}
     setJobTitle={setJobTitle}
     setJobCompany={setJobCompany}
     setJobLocation={setJobLocation}
     setJobSalary={setJobSalary}
+     setJobCurrency={setJobCurrency}
     setJobDescription={setJobDescription}
     createJob={(event) => createJob(event, setMessage)}
   />

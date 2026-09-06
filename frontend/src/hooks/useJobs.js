@@ -10,6 +10,7 @@ function useJobs() {
   const [jobCompany, setJobCompany] = useState("");
   const [jobLocation, setJobLocation] = useState("");
   const [jobSalary, setJobSalary] = useState("");
+  const [jobCurrency, setJobCurrency] = useState("PLN");
   const [jobDescription, setJobDescription] = useState("");
 
   const loadJobs = async (setMessage) => {
@@ -83,7 +84,7 @@ function useJobs() {
           title: jobTitle,
           company: jobCompany,
           location: jobLocation,
-          salary: jobSalary,
+          salary: jobSalary ? `${jobSalary} ${jobCurrency}` : "",
           description: jobDescription,
         },
         token
@@ -99,6 +100,7 @@ function useJobs() {
       setJobCompany("");
       setJobLocation("");
       setJobSalary("");
+      setJobCurrency("PLN");
       setJobDescription("");
 
       setEditingJobId(null);
@@ -129,6 +131,8 @@ function useJobs() {
     setJobLocation,
     setJobSalary,
     setJobDescription,
+    setJobCurrency,
+    jobCurrency,
 
     loadJobs,
     deleteJob,

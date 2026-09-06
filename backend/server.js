@@ -407,6 +407,48 @@ app.delete("/jobs/:id", authenticateToken, async (req, res) => {
     });
   }
 });
+app.get("/locations/search", async (req, res) => {
+  try {
+    const text = req.query.text?.trim();
+
+    if (!text || text.length < 2) {
+      return res.json({
+        cities: [],
+      });
+    }
+
+    const url = new URL(
+      "https://api.geoapify.com/v1/geocode/autocomplete"
+    );
+
+    url.searchParams.set("text", text);
+    url.searchParams.set("type", "city");
+    url.searchParams.set("limit", "5");
+    url.searchParams.set("apiKey", process.env.GEOAPIFY_API_KEY);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Geoapify error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const cities = data.features.map((feature) => ({
+      name: feature.properties.city || feature.properties.name,
+      country: feature.properties.country,
+      formatted: feature.properties.formatted,
+    }));
+
+    res.json({ cities });
+  } catch (error) {
+    console.error("Location search error:", error);
+
+    res.status(500).json({
+      message: "Failed to search locations",
+    });
+  }
+});
 
 
 app.listen(PORT, () => {
