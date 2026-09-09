@@ -29,9 +29,11 @@ function Profile({
 
   return (
     <div className="profile">
-      <h2>Welcome, {user.name}!</h2>
-      <p>{user.email}</p>
-
+     <h2>Welcome, {user.name}!</h2>
+<p>{user.email}</p>
+<p>
+  Role: {user.role === "employer" ? "🏢 Employer" : "👤 Job Seeker"}
+</p>
       <button onClick={loadProfile}>
         Load profile
       </button>
@@ -39,11 +41,12 @@ function Profile({
       <button onClick={loadJobs}>
         Load jobs
       </button>
-
-      <button onClick={handleJobFormToggle}>
-        {showJobForm ? "Cancel" : "Create job"}
-      </button>
-
+      
+{user.role === "employer" && (
+  <button onClick={handleJobFormToggle}>
+    {showJobForm ? "Cancel" : "Create job"}
+  </button>
+)}
       <button onClick={logout} className="logout">
         Logout
       </button>

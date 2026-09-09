@@ -59,7 +59,17 @@ function useJobs() {
     setJobTitle(job.title);
     setJobCompany(job.company);
     setJobLocation(job.location || "");
-    setJobSalary(job.salary || "");
+   const salary = (job.salary || "").trim();
+
+const salaryMatch = salary.match(/^(\d+)\s*(PLN|EUR|USD)?$/);
+
+if (salaryMatch) {
+  setJobSalary(salaryMatch[1] || "");
+  setJobCurrency(salaryMatch[2] || "PLN");
+} else {
+  setJobSalary("");
+  setJobCurrency("PLN");
+}
     setJobDescription(job.description || "");
 
     setShowJobForm(true);

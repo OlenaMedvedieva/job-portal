@@ -15,6 +15,24 @@ const pool = new Pool({
   password: process.env.DB_PASSWORD,
   port: Number(process.env.DB_PORT),
 });
+
+pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'job_seeker'
+`).then(() => {
+  console.log("Users role column is ready");
+}).catch((error) => {
+  console.error("Users role column error:", error);
+});
+pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS job_title VARCHAR(255)
+`).then(() => {
+  console.log("Users job title column is ready");
+}).catch((error) => {
+  console.error("Users job title column error:", error);
+});
+
 pool.query(`
   CREATE TABLE IF NOT EXISTS jobs (
     id SERIAL PRIMARY KEY,
@@ -83,7 +101,7 @@ app.get("/db-test", async (req, res) => {
 
 app.post("/register", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password , role } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -105,10 +123,10 @@ app.post("/register", async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash)
-       VALUES ($1, $2, $3)
-       RETURNING id, name, email, created_at`,
-      [name, email, passwordHash]
+      `INSERT INTO users (name, email, password_hash, role)
+ VALUES ($1, $2, $3, $4)
+ RETURNING id, name, email, role, created_at`,
+[name, email, passwordHash, role || "job_seeker"]
     );
 
     res.status(201).json({
@@ -134,10 +152,9 @@ app.post("/login", async (req, res) => {
     }
 
     const result = await pool.query(
-      "SELECT id, name, email, password_hash FROM users WHERE email = $1",
-      [email]
-    );
-
+  "SELECT id, name, email, password_hash, role FROM users WHERE email = $1",
+  [email]
+);
     if (result.rows.length === 0) {
       return res.status(401).json({
         message: "Invalid email or password",
@@ -175,6 +192,7 @@ app.post("/login", async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+         role: user.role,
       },
     });
   } catch (error) {
@@ -189,7 +207,7 @@ app.post("/login", async (req, res) => {
 app.get("/profile", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, email, created_at FROM users WHERE id = $1",
+      "SELECT id, name, email, role, created_at FROM users WHERE id = $1",
       [req.user.id]
     );
 
@@ -207,6 +225,37 @@ app.get("/profile", authenticateToken, async (req, res) => {
 
     res.status(500).json({
       message: "Failed to load profile",
+    });
+  }
+});
+
+app.put("/profile", authenticateToken, async (req, res) => {
+  try {
+    const { jobTitle } = req.body;
+
+    const result = await pool.query(
+      `UPDATE users
+       SET job_title = $1
+       WHERE id = $2
+       RETURNING id, name, email, role, job_title, created_at`,
+      [jobTitle || null, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+
+    res.status(500).json({
+      message: "Failed to update profile",
     });
   }
 });

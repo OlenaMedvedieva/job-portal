@@ -2,6 +2,59 @@ import { useEffect, useState } from "react";
 
 const API_URL = "http://localhost:3000";
 
+const looksLikeRandomText = (text) => {
+  const value = text.trim().toLowerCase();
+
+  if (!value) {
+    return true;
+  }
+
+  if (/^(.)\1+$/.test(value.replace(/\s/g, ""))) {
+    return true;
+  }
+
+  const randomPatterns = [
+    "qwerty",
+    "asdfgh",
+    "zxcvbn",
+    "qazwsx",
+    "qweasd",
+    "wsxedc",
+    "edcrfv",
+    "rfvtgb",
+    "yhnujm",
+  ];
+
+  if (randomPatterns.some((pattern) => value.includes(pattern))) {
+    return true;
+  }
+
+  const words = value.split(/\s+/);
+
+  for (const word of words) {
+    const letters = word.replace(
+      /[^a-zа-яіїєёąćęłńóśźż]/gi,
+      ""
+    );
+
+    if (letters.length < 4) {
+      continue;
+    }
+
+    if (!/[aeiouyąęóаеєиіоуюяї]/i.test(letters)) {
+      return true;
+    }
+
+    if (
+      /[bcdfghjklmnpqrstvwxzćłńśźż]{4,}/i.test(letters)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 function JobForm({
   editingJobId,
   jobTitle,
@@ -99,15 +152,19 @@ const handleSubmit = (event) => {
   const salary = jobSalary.trim();
   const description = jobDescription.trim();
 
-  const newErrors = {};
+  const newErrors = {}; 
 
-  if (title.length < 3) {
-    newErrors.title = "Job title must contain at least 3 characters.";
-  }
+if (title.length < 3) {
+  newErrors.title = "Job title must contain at least 3 characters.";
+} else if (looksLikeRandomText(title)) {
+  newErrors.title = "Please enter a valid job title.";
+}
 
-  if (company.length < 2) {
-    newErrors.company = "Company name must contain at least 2 characters.";
-  }
+if (company.length < 2) {
+  newErrors.company = "Company name must contain at least 2 characters.";
+} else if (looksLikeRandomText(company)) {
+  newErrors.company = "Please enter a valid company name.";
+}
 
   if (location.length < 2) {
     newErrors.location = "Please enter a valid location.";
@@ -118,9 +175,12 @@ const handleSubmit = (event) => {
   }
 
   if (description.length < 20) {
-    newErrors.description =
-      "Description must contain at least 20 characters.";
-  }
+  newErrors.description =
+    "Description must contain at least 20 characters.";
+} else if (looksLikeRandomText(description)) {
+  newErrors.description =
+    "Please enter a valid description.";
+}
 
   setErrors(newErrors);
 

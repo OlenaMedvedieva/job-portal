@@ -17,6 +17,7 @@ export const getProfile = async (token) => {
     },
   });
 
+
   const data = await response.json();
 
   if (!response.ok) {
@@ -25,6 +26,28 @@ export const getProfile = async (token) => {
 
   return data.user;
 };
+
+export const updateProfile = async (jobTitle, token) => {
+  const response = await fetch(`${API_URL}/profile`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      jobTitle,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to update profile");
+  }
+
+  return data;
+};
+
 export const deleteJob = async (jobId, token) => {
   const response = await fetch(`${API_URL}/jobs/${jobId}`, {
     method: "DELETE",

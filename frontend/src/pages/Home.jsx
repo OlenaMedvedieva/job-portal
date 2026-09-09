@@ -7,6 +7,7 @@ import Register from "../components/Register.jsx";
 import JobList from "../components/JobList.jsx";
 import JobForm from "../components/JobForm.jsx";
 import Profile from "../components/Profile.jsx";
+import JobSeekerProfile from "../components/JobSeekerProfile.jsx";
 import "../App.css";
 
 
@@ -46,6 +47,11 @@ const {
   setEmail,
   password,
   setPassword,
+  jobTitle: jobSeekerJobTitle,
+  setJobTitle: setJobSeekerJobTitle,
+  saveProfile, 
+  role,
+  setRole,
   user,
   handleSubmit,
   loadProfile,
@@ -93,15 +99,17 @@ const {
     handleSubmit={handleSubmit}
   />
 ) : (
-  <Register
-    name={name}
-    email={email}
-    password={password}
-    setName={setName}
-    setEmail={setEmail}
-    setPassword={setPassword}
-    handleSubmit={handleSubmit}
-  />
+ <Register
+  name={name}
+  email={email}
+  password={password}
+  role={role}
+  setName={setName}
+  setEmail={setEmail}
+  setPassword={setPassword}
+  setRole={setRole}
+  handleSubmit={handleSubmit}
+/>
 )}
           </>
         ) : (
@@ -122,6 +130,13 @@ const {
   setJobSalary={setJobSalary}
   setJobDescription={setJobDescription}
   logout={logout}
+/>
+<JobSeekerProfile
+  jobTitle={jobSeekerJobTitle}
+  setJobTitle={setJobSeekerJobTitle}
+  saveProfile={saveProfile}
+  message={message}
+
 />
 
          {showJobForm && (
