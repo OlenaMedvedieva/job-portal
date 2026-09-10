@@ -4,6 +4,21 @@ const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Pool } = require("pg");
+const nodemailer = require("nodemailer");
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_APP_PASSWORD,
+  },
+});
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("Email transporter error:", error);
+  } else {
+    console.log("Email transporter is ready");
+  }
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +46,22 @@ pool.query(`
   console.log("Users job title column is ready");
 }).catch((error) => {
   console.error("Users job title column error:", error);
+});
+pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false
+`).then(() => {
+  console.log("Users email verification column is ready");
+}).catch((error) => {
+  console.error("Users email verification column error:", error);
+});
+pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255)
+`).then(() => {
+  console.log("Users email verification token column is ready");
+}).catch((error) => {
+  console.error("Users email verification token column error:", error);
 });
 
 pool.query(`
@@ -122,23 +153,75 @@ app.post("/register", async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
-      `INSERT INTO users (name, email, password_hash, role)
- VALUES ($1, $2, $3, $4)
- RETURNING id, name, email, role, created_at`,
-[name, email, passwordHash, role || "job_seeker"]
-    );
+    const verificationToken = require("crypto").randomBytes(32).toString("hex");
 
-    res.status(201).json({
-      message: "User registered successfully",
-      user: result.rows[0],
-    });
+const result = await pool.query(
+  `INSERT INTO users (
+    name,
+    email,
+    password_hash,
+    role,
+    email_verification_token
+  )
+  VALUES ($1, $2, $3, $4, $5)
+  RETURNING id, name, email, role, created_at`,
+  [
+    name,
+    email,
+    passwordHash,
+    role || "job_seeker",
+    verificationToken,
+  ]
+);
+await transporter.sendMail({
+  from: process.env.EMAIL_USER,
+  to: email,
+  subject: "Verify your Job Portal email",
+  html:   `
+    <h2>Welcome to Job Portal!</h2>
+    <p>Please verify your email address by clicking the link below:</p>
+    <p>
+       <a href="http://192.168.0.103:3000/verify-email/${verificationToken}">
+    Verify Email
+      </a>
+    </p>
+    `,
+});
+
+res.status(201).json({
+  message: "Registration successful! Please check your email to verify your account.",
+  user: result.rows[0],
+});
   } catch (error) {
     console.error("Registration error:", error);
 
     res.status(500).json({
       message: "Registration failed",
     });
+  }
+});
+app.get("/verify-email/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const result = await pool.query(
+      `UPDATE users
+       SET email_verified = true,
+           email_verification_token = NULL
+       WHERE email_verification_token = $1
+       RETURNING id, name, email`,
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).send("Invalid or expired verification link");
+    }
+
+    res.send("Email verified successfully! You can now log in.");
+  } catch (error) {
+    console.error("Email verification error:", error);
+
+    res.status(500).send("Email verification failed");
   }
 });
 app.post("/login", async (req, res) => {
@@ -152,7 +235,7 @@ app.post("/login", async (req, res) => {
     }
 
     const result = await pool.query(
-  "SELECT id, name, email, password_hash, role FROM users WHERE email = $1",
+      "SELECT id, name, email, password_hash, role, email_verified FROM users WHERE email = $1",
   [email]
 );
     if (result.rows.length === 0) {
@@ -160,6 +243,7 @@ app.post("/login", async (req, res) => {
         message: "Invalid email or password",
       });
     }
+   
 
     const user = result.rows[0];
 
@@ -167,7 +251,11 @@ app.post("/login", async (req, res) => {
       password,
       user.password_hash
     );
-
+ if (!user.email_verified) {
+  return res.status(403).json({
+    message: "Please verify your email before logging in.",
+  });
+}
     if (!passwordMatch) {
       return res.status(401).json({
         message: "Invalid email or password",
@@ -207,7 +295,7 @@ app.post("/login", async (req, res) => {
 app.get("/profile", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, email, role, created_at FROM users WHERE id = $1",
+      "SELECT id, name, email, role, job_title, created_at FROM users WHERE id = $1",
       [req.user.id]
     );
 
@@ -259,6 +347,7 @@ app.put("/profile", authenticateToken, async (req, res) => {
     });
   }
 });
+
 app.post("/jobs", authenticateToken, async (req, res) => {
   try {
     const {
@@ -299,6 +388,35 @@ app.post("/jobs", authenticateToken, async (req, res) => {
 
     res.status(500).json({
       message: "Failed to create job",
+    });
+  }
+});
+app.post("/jobs/:id/apply", authenticateToken, async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    const result = await pool.query(
+      `INSERT INTO applications (job_id, user_id)
+       VALUES ($1, $2)
+       RETURNING id, job_id, user_id, status, created_at`,
+      [jobId, req.user.id]
+    );
+
+    res.status(201).json({
+      message: "Application submitted successfully",
+      application: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Apply for job error:", error);
+
+    if (error.code === "23505") {
+      return res.status(409).json({
+        message: "You have already applied for this job",
+      });
+    }
+
+    res.status(500).json({
+      message: "Failed to submit application",
     });
   }
 });
@@ -365,6 +483,41 @@ app.get("/jobs/:id", async (req, res) => {
 
     res.status(500).json({
       message: "Failed to load job",
+    });
+  }
+});
+
+app.get("/jobs/:id/applications", authenticateToken, async (req, res) => {
+  try {
+    const jobId = req.params.id;
+
+    const result = await pool.query(
+      `SELECT
+        applications.id,
+        applications.job_id,
+        applications.user_id,
+        applications.status,
+        applications.created_at,
+        users.name,
+        users.email,
+        users.job_title
+       FROM applications
+       JOIN users ON applications.user_id = users.id
+       JOIN jobs ON applications.job_id = jobs.id
+       WHERE applications.job_id = $1
+         AND jobs.user_id = $2
+       ORDER BY applications.created_at DESC`,
+      [jobId, req.user.id]
+    );
+
+    res.json({
+      applications: result.rows,
+    });
+  } catch (error) {
+    console.error("Get applications error:", error);
+
+    res.status(500).json({
+      message: "Failed to load applications",
     });
   }
 });

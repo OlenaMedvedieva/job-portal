@@ -1,3 +1,4 @@
+import JobSeekerProfile from "./JobSeekerProfile.jsx";
 function Profile({
   user,
   loadProfile,
@@ -11,29 +12,40 @@ function Profile({
   setJobSalary,
   setJobDescription,
   logout,
+  jobSeekerJobTitle,
+  setJobSeekerJobTitle,
+  saveProfile,
 }) {
- const handleJobFormToggle = () => {
-  if (showJobForm) {
-    setShowJobForm(false);
-    return;
-  }
+  const handleJobFormToggle = () => {
+    if (showJobForm) {
+      setShowJobForm(false);
+      return;
+    }
 
-  setEditingJobId(null);
-  setJobTitle("");
-  setJobCompany("");
-  setJobLocation("");
-  setJobSalary("");
-  setJobDescription("");
-  setShowJobForm(true);
-};
+    setEditingJobId(null);
+    setJobTitle("");
+    setJobCompany("");
+    setJobLocation("");
+    setJobSalary("");
+    setJobDescription("");
+    setShowJobForm(true);
+  };
+
+  const handleSaveProfile = async () => {
+    const result = await saveProfile();
+    return result;
+  };
 
   return (
     <div className="profile">
-     <h2>Welcome, {user.name}!</h2>
-<p>{user.email}</p>
-<p>
-  Role: {user.role === "employer" ? "🏢 Employer" : "👤 Job Seeker"}
-</p>
+      <h2>Welcome, {user.name}!</h2>
+
+      <p>{user.email}</p>
+
+      <p>
+        Role: {user.role === "employer" ? "🏢 Employer" : "👤 Job Seeker"}
+      </p>
+
       <button onClick={loadProfile}>
         Load profile
       </button>
@@ -41,17 +53,27 @@ function Profile({
       <button onClick={loadJobs}>
         Load jobs
       </button>
-      
-{user.role === "employer" && (
-  <button onClick={handleJobFormToggle}>
-    {showJobForm ? "Cancel" : "Create job"}
-  </button>
-)}
+
+      {user.role === "employer" && (
+        <button onClick={handleJobFormToggle}>
+          {showJobForm ? "Cancel" : "Create job"}
+        </button>
+      )}
+
       <button onClick={logout} className="logout">
         Logout
       </button>
+      
+       {user.role === "job_seeker" && (
+  <JobSeekerProfile
+    jobTitle={jobSeekerJobTitle}
+    setJobTitle={setJobSeekerJobTitle}
+    saveProfile={handleSaveProfile}
+  />
+      )}
     </div>
   );
 }
 
 export default Profile;
+

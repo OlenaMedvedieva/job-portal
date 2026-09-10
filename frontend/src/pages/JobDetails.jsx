@@ -7,6 +7,31 @@ function JobDetails() {
   const { id } = useParams();
   const [job, setJob] = useState(null);
   const [message, setMessage] = useState("");
+  
+  const handleApply = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(`${API_URL}/jobs/${id}/apply`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.message || "Failed to apply for this job");
+      return;
+    }
+
+    setMessage(data.message);
+  } catch (error) {
+    console.error(error);
+    setMessage("Cannot connect to the server");
+  }
+};
 
   useEffect(() => {
     const loadJob = async () => {
@@ -64,6 +89,7 @@ function JobDetails() {
 
       <br />
 
+      <button onClick={handleApply}>Apply for this job</button>
       <Link to="/">Back to jobs</Link>
     </section>
   );

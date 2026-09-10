@@ -53,6 +53,7 @@ const {
   role,
   setRole,
   user,
+  message: authMessage,
   handleSubmit,
   loadProfile,
   logout,
@@ -109,17 +110,25 @@ const {
   setPassword={setPassword}
   setRole={setRole}
   handleSubmit={handleSubmit}
+   message={message}
 />
 )}
           </>
         ) : (
           <>
-          <Profile
+
+<Profile
+  jobSeekerJobTitle={jobSeekerJobTitle}
+  setJobSeekerJobTitle={setJobSeekerJobTitle}
+  saveProfile={async () => {
+    const result = await saveProfile();
+    setMessage(result);
+  }}
   user={user}
   loadProfile={async () => {
-  const result = await loadProfile();
-  setMessage(result);
-}}
+    const result = await loadProfile();
+    setMessage(result);
+  }}
   loadJobs={() => loadJobs(setMessage)}
   showJobForm={showJobForm}
   setShowJobForm={setShowJobForm}
@@ -131,32 +140,26 @@ const {
   setJobDescription={setJobDescription}
   logout={logout}
 />
-<JobSeekerProfile
-  jobTitle={jobSeekerJobTitle}
-  setJobTitle={setJobSeekerJobTitle}
-  saveProfile={saveProfile}
-  message={message}
 
-/>
-
-         {showJobForm && (
+{showJobForm && (
   <JobForm
     editingJobId={editingJobId}
     jobTitle={jobTitle}
     jobCompany={jobCompany}
     jobLocation={jobLocation}
     jobSalary={jobSalary}
-     jobCurrency={jobCurrency}
+    jobCurrency={jobCurrency}
     jobDescription={jobDescription}
     setJobTitle={setJobTitle}
     setJobCompany={setJobCompany}
     setJobLocation={setJobLocation}
     setJobSalary={setJobSalary}
-     setJobCurrency={setJobCurrency}
+    setJobCurrency={setJobCurrency}
     setJobDescription={setJobDescription}
     createJob={(event) => createJob(event, setMessage)}
   />
 )}
+
           <JobList
   jobs={jobs}
   user={user}
@@ -166,8 +169,8 @@ const {
 />
           </>
         )}
-        
         {message && <p className="message">{message}</p>}
+{authMessage && <p className="message">{authMessage}</p>}
       </div>
     </main>
   );

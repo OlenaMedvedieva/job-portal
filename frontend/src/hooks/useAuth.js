@@ -28,6 +28,7 @@ const restoreUser = async () => {
     });
 
     const data = await response.json();
+    console.log("PROFILE DATA:", data);
 
     if (!response.ok) {
       localStorage.removeItem("token");
@@ -35,6 +36,7 @@ const restoreUser = async () => {
     }
 
     setUser(data.user);
+    setJobTitle(data.user.job_title || "");
   } catch (error) {
     console.error("Restore user error:", error);
   }
@@ -67,7 +69,7 @@ try {
   });
 
   const data = await response.json();
-
+  console.log("REGISTER RESPONSE MESSAGE:", data.message);
   if (!response.ok) {
     setMessage(data.message || "Something went wrong");
     return;

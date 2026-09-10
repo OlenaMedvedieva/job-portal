@@ -3,6 +3,7 @@ name,
 email,
 password,
 role,
+message,
 setName,
 setEmail,
 setPassword,
@@ -50,7 +51,7 @@ placeholder="Your name"
       <option value="employer">🏢 Hire people</option>
     </select>
   </label>
-
+   {message && <p className="form-message">{message}</p>}
   <button className="submit-button" type="submit">
     Create account
   </button>

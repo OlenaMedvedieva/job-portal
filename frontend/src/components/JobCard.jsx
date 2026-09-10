@@ -1,3 +1,7 @@
+import { useState } from "react";
+import Applications from "./Applications.jsx";
+
+
 function JobCard({
   job,
   user,
@@ -5,6 +9,8 @@ function JobCard({
   onEditJob,
   onDeleteJob,
 }) {
+  const [showApplications, setShowApplications] = useState(false);
+  
   return (
     <article className="job-card">
       <h3>{job.title}</h3>
@@ -43,6 +49,11 @@ function JobCard({
           >
             Delete
           </button>
+          <button onClick={() => setShowApplications(!showApplications)}>
+  {showApplications ? "Hide Applications" : "View Applications"}
+</button>
+
+{showApplications && <Applications jobId={job.id} />}
         </div>
       )}
     </article>
