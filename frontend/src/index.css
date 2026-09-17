@@ -113,6 +113,10 @@ code {
   position: relative;
 }
 
+.location-field {
+  position: relative;
+}
+
 .location-field > small {
   display: block;
   margin-top: 5px;

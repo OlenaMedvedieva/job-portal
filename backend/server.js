@@ -47,6 +47,24 @@ pool.query(`
 }).catch((error) => {
   console.error("Users job title column error:", error);
 });
+
+pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS city VARCHAR(255)
+`).then(() => {
+  console.log("Users city column is ready");
+}).catch((error) => {
+  console.error("Users city column error:", error);
+});
+pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS skills TEXT
+`).then(() => {
+  console.log("Users skills column is ready");
+}).catch((error) => {
+  console.error("Users skills column error:", error);
+});
+
 pool.query(`
   ALTER TABLE users
   ADD COLUMN IF NOT EXISTS email_verified BOOLEAN DEFAULT false
@@ -361,7 +379,7 @@ app.post("/resend-verification", async (req, res) => {
 app.get("/profile", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, name, email, role, job_title, created_at FROM users WHERE id = $1",
+      "SELECT id, name, email, role, job_title, city, skills, created_at FROM users WHERE id = $1"
       [req.user.id]
     );
 
@@ -385,14 +403,14 @@ app.get("/profile", authenticateToken, async (req, res) => {
 
 app.put("/profile", authenticateToken, async (req, res) => {
   try {
-    const { jobTitle } = req.body;
+    const { jobTitle , city , skills } = req.body;
 
     const result = await pool.query(
       `UPDATE users
-       SET job_title = $1
-       WHERE id = $2
-       RETURNING id, name, email, role, job_title, created_at`,
-      [jobTitle || null, req.user.id]
+       SET job_title = $1, city = $2, skills = $3
+       WHERE id = $4
+       RETURNING id, name, email, role, job_title, city, skills, created_at`,
+      [jobTitle || null, city || null, skills || null, req.user.id]
     );
 
     if (result.rows.length === 0) {

@@ -49,6 +49,10 @@ const {
   setPassword,
   jobTitle: jobSeekerJobTitle,
   setJobTitle: setJobSeekerJobTitle,
+  city,
+ setCity,
+  skills,
+  setSkills,
   saveProfile, 
   role,
   setRole,
@@ -123,6 +127,10 @@ const {
 <Profile
   jobSeekerJobTitle={jobSeekerJobTitle}
   setJobSeekerJobTitle={setJobSeekerJobTitle}
+  city={city}
+  setCity={setCity}
+  skills={skills}
+  setSkills={setSkills}
   saveProfile={async () => {
     const result = await saveProfile();
     setMessage(result);

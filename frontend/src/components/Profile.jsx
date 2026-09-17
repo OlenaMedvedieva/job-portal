@@ -14,7 +14,11 @@ function Profile({
   logout,
   jobSeekerJobTitle,
   setJobSeekerJobTitle,
+  city,
+  setCity,
   saveProfile,
+  skills,
+  setSkills,
 }) {
   const handleJobFormToggle = () => {
     if (showJobForm) {
@@ -68,7 +72,11 @@ function Profile({
   <JobSeekerProfile
     jobTitle={jobSeekerJobTitle}
     setJobTitle={setJobSeekerJobTitle}
+    city={city}
+    setCity={setCity}
     saveProfile={handleSaveProfile}
+    skills={skills}
+    setSkills={setSkills}
   />
       )}
     </div>

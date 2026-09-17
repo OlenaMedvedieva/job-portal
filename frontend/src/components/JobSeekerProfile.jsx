@@ -1,12 +1,65 @@
-import { useState } from "react";
+import {  useEffect, useState } from "react";
 
 function JobSeekerProfile({
 jobTitle,
 setJobTitle,
+city,
+setCity,
+skills,
+setSkills,
 saveProfile,
 }) {
 const [isEditing, setIsEditing] = useState(false);
 const [message, setMessage] = useState("");
+const [citySuggestions, setCitySuggestions] = useState([]);
+const [cityLoading, setCityLoading] = useState(false);
+const [citySelected, setCitySelected] = useState(Boolean(city));
+ 
+const handleCityChange = (event) => {
+  setCity(event.target.value);
+  setCitySelected(false);
+};
+
+const handleCitySelect = (selectedCity) => {
+  setCity(selectedCity.formatted);
+  setCitySelected(true);
+  setCitySuggestions([]);
+};
+
+useEffect(() => {
+  if (citySelected || city.trim().length < 2) {
+    setCitySuggestions([]);
+    return;
+  }
+ 
+  const timer = setTimeout(async () => {
+    try {
+      setCityLoading(true);
+
+      console.log("CITY SEARCH:", city);
+
+const response = await fetch(
+  `http://localhost:3000/locations/search?text=${encodeURIComponent(city)}`
+);
+
+console.log("CITY RESPONSE:", response.status);
+      const data = await response.json();
+
+      if (response.ok) {
+        setCitySuggestions(data.cities || []);
+      } else {
+        setCitySuggestions([]);
+      }
+    } catch (error) {
+      console.error("City search error:", error);
+      setCitySuggestions([]);
+    } finally {
+      setCityLoading(false);
+    }
+  }, 400);
+
+  return () => clearTimeout(timer);
+}, [city, citySelected]);
 
 const handleSave = async () => {
 const result = await saveProfile();
@@ -28,6 +81,8 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
   {!isEditing ? (
     <>
       <p>{jobTitle || "Not specified"}</p>
+      <p>{city || "City not specified"}</p>
+      <p>{skills || "Skills not specified"}</p>
 
       <button
         className="submit-button"
@@ -48,7 +103,51 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
         onChange={(event) => setJobTitle(event.target.value)}
         placeholder="e.g. Frontend Developer"
       />
+   <label className="location-field">
+  City
+  <input
+    type="text"
+    value={city}
+    onChange={handleCityChange}
+    placeholder="Start typing a city..."
+    autoComplete="off"
+  />
 
+  {cityLoading && (
+    <small>Searching cities...</small>
+  )}
+
+  {citySuggestions.length > 0 && (
+    <div className="location-suggestions">
+      {citySuggestions.map((cityItem, index) => (
+        <button
+          type="button"
+          key={`${cityItem.formatted}-${index}`}
+          className="location-suggestion"
+          onClick={() => handleCitySelect(cityItem)}
+        >
+          {cityItem.formatted}
+        </button>
+      ))}
+    </div>
+  )}
+
+  {!cityLoading &&
+    city.trim().length >= 2 &&
+    !citySelected &&
+    citySuggestions.length === 0 && (
+      <small>No cities found</small>
+    )}
+</label>
+<label>
+  Skills
+  <input
+    type="text"
+    value={skills}
+    onChange={(event) => setSkills(event.target.value)}
+    placeholder="e.g. React, JavaScript, HTML, CSS"
+  />
+</label>
       <button
         className="submit-button"
         type="button"
