@@ -272,6 +272,7 @@ app.post("/login", async (req, res) => {
         expiresIn: "1h",
       }
     );
+    
 
     res.json({
       message: "Login successful",
@@ -291,7 +292,72 @@ app.post("/login", async (req, res) => {
     });
   }
 });
+app.post("/resend-verification", async (req, res) => {
+  try {
+    const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+      });
+    }
+
+    const userResult = await pool.query(
+      "SELECT id, email, email_verified FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "User with this email does not exist",
+      });
+    }
+
+    const user = userResult.rows[0];
+
+    if (user.email_verified) {
+      return res.status(400).json({
+        message: "Email is already verified",
+      });
+    }
+
+    const verificationToken = require("crypto")
+      .randomBytes(32)
+      .toString("hex");
+
+    await pool.query(
+      `UPDATE users
+       SET email_verification_token = $1
+       WHERE id = $2`,
+      [verificationToken, user.id]
+    );
+
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "New Job Portal verification link",
+      html: `
+        <h2>Verify your Job Portal email</h2>
+        <p>Here is your new verification link:</p>
+        <p>
+        <a href="http://172.23.47.70:3000/verify-email/${verificationToken}">
+            Verify Email
+          </a>
+        </p>
+      `,
+    });
+
+    res.json({
+      message: "A new verification email has been sent!",
+    });
+  } catch (error) {
+    console.error("Resend verification error:", error);
+
+    res.status(500).json({
+      message: "Failed to resend verification email",
+    });
+  }
+});
 app.get("/profile", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(

@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { API_URL, getProfile, updateProfile } from "../api/jobsApi";
+import {
+  API_URL,
+  getProfile,
+  updateProfile,
+  resendVerificationEmail,
+} from "../api/jobsApi";
 
 function useAuth() {
 const [mode, setMode] = useState("login");
@@ -134,6 +139,21 @@ const saveProfile = async () => {
   }
 };
 
+const resendVerification = async () => {
+  if (!email) {
+    return "Please enter your email";
+  }
+
+  try {
+    const result = await resendVerificationEmail(email);
+
+    return result.message;
+  } catch (error) {
+    console.error("Resend verification error:", error);
+
+    return error.message || "Failed to resend verification email";
+  }
+};
 const logout = () => {
 localStorage.removeItem("token");
 setUser(null);
@@ -160,6 +180,7 @@ return {
   handleSubmit,
   loadProfile,
   saveProfile,
+   resendVerification,
   logout,
 };
 }

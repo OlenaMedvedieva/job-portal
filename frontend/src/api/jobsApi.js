@@ -1,4 +1,4 @@
- export const API_URL = "http://localhost:3000";
+export const API_URL = "http://localhost:3000";
 
 export const getJobs = async () => {
   const response = await fetch(`${API_URL}/jobs`);
@@ -10,13 +10,13 @@ export const getJobs = async () => {
 
   return data.jobs;
 };
+
 export const getProfile = async (token) => {
   const response = await fetch(`${API_URL}/profile`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
-
 
   const data = await response.json();
 
@@ -64,13 +64,12 @@ export const deleteJob = async (jobId, token) => {
 
   return data;
 };
+
 export const saveJob = async (jobId, jobData, token) => {
   const isEditing = jobId !== null;
 
   const response = await fetch(
-    isEditing
-      ? `${API_URL}/jobs/${jobId}`
-      : `${API_URL}/jobs`,
+    isEditing ? `${API_URL}/jobs/${jobId}` : `${API_URL}/jobs`,
     {
       method: isEditing ? "PUT" : "POST",
       headers: {
@@ -85,6 +84,26 @@ export const saveJob = async (jobId, jobData, token) => {
 
   if (!response.ok) {
     throw new Error(data.message || "Failed to save job");
+  }
+
+  return data;
+};
+
+export const resendVerificationEmail = async (email) => {
+  const response = await fetch(`${API_URL}/resend-verification`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Failed to resend verification email"
+    );
   }
 
   return data;

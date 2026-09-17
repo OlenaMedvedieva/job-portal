@@ -56,6 +56,7 @@ const {
   message: authMessage,
   handleSubmit,
   loadProfile,
+  resendVerification,
   logout,
 } = useAuth();
 
@@ -110,10 +111,12 @@ const {
   setPassword={setPassword}
   setRole={setRole}
   handleSubmit={handleSubmit}
-   message={message}
+  message={authMessage}
+  resendVerification={resendVerification}
+
 />
 )}
-          </>
+      </>
         ) : (
           <>
 

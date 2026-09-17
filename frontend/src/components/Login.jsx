@@ -1,3 +1,4 @@
+import { useState } from "react";
 function Login({
   email,
   password,
@@ -5,6 +6,8 @@ function Login({
   setPassword,
   handleSubmit,
 }) {
+
+    const [showPassword, setShowPassword] = useState(false);
   return (
     <form onSubmit={handleSubmit}>
       <label>
@@ -18,22 +21,31 @@ function Login({
         />
       </label>
 
-      <label>
-        Password
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Password"
-          required
-        />
-      </label>
+<label>
+  Password
+  <div className="password-field">
+    <input
+      type={showPassword ? "text" : "password"}
+      value={password}
+      onChange={(event) => setPassword(event.target.value)}
+      placeholder="Password"
+      required
+    />
+    <button
+      type="button"
+      className="password-toggle"
+      onClick={() => setShowPassword(!showPassword)}
+    >
+      {showPassword ? "🙈" : "👁️"}
+    </button>
+  </div>
+</label>
 
-      <button className="submit-button" type="submit">
-        Login
-      </button>
+<button className="submit-button" type="submit">
+  Login
+</button>
+
     </form>
   );
 }
-
 export default Login;
