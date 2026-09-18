@@ -14,6 +14,7 @@ const [password, setPassword] = useState("");
 const [jobTitle, setJobTitle] = useState("");
 const [city, setCity] = useState("");
 const [skills, setSkills] = useState("");
+const [experience, setExperience] = useState("");
 const [role, setRole] = useState("job_seeker");
 const [user, setUser] = useState(null);
 const [message, setMessage] = useState("");
@@ -46,6 +47,7 @@ const restoreUser = async () => {
     setJobTitle(data.user.job_title || "");
     setCity(data.user.city || "");
     setSkills(data.user.skills || "");
+    setExperience(data.user.experience || "");
   } catch (error) {
     console.error("Restore user error:", error);
   }
@@ -130,7 +132,13 @@ const saveProfile = async () => {
   try {
     console.log("SAVING JOB TITLE:", jobTitle);
 
-const result = await updateProfile(jobTitle, city, skills, token);
+    const result = await updateProfile(
+      jobTitle,
+      city,
+      skills,
+      experience,
+      token
+    );
     console.log("UPDATE PROFILE RESULT:", result);
 
     setUser(result.user);
@@ -180,6 +188,8 @@ return {
   setCity,
   skills,
   setSkills,
+  experience,
+  setExperience,
   role,
   setRole,
   user,

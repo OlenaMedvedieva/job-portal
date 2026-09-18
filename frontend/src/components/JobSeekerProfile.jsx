@@ -5,8 +5,10 @@ jobTitle,
 setJobTitle,
 city,
 setCity,
-skills,
+skills, 
 setSkills,
+experience,
+setExperience,
 saveProfile,
 }) {
 const [isEditing, setIsEditing] = useState(false);
@@ -83,6 +85,7 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
       <p>{jobTitle || "Not specified"}</p>
       <p>{city || "City not specified"}</p>
       <p>{skills || "Skills not specified"}</p>
+       <p>{experience || "Experience not specified"}</p>
 
       <button
         className="submit-button"
@@ -139,6 +142,7 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
       <small>No cities found</small>
     )}
 </label>
+
 <label>
   Skills
   <input
@@ -148,6 +152,17 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
     placeholder="e.g. React, JavaScript, HTML, CSS"
   />
 </label>
+
+<label>
+  Experience
+  <textarea
+    value={experience}
+    onChange={(event) => setExperience(event.target.value)}
+    placeholder="Describe your work experience..."
+    rows="4"
+  />
+</label>
+
       <button
         className="submit-button"
         type="button"

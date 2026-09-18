@@ -19,6 +19,8 @@ function Profile({
   saveProfile,
   skills,
   setSkills,
+  experience,
+  setExperience,
 }) {
   const handleJobFormToggle = () => {
     if (showJobForm) {
@@ -77,6 +79,8 @@ function Profile({
     saveProfile={handleSaveProfile}
     skills={skills}
     setSkills={setSkills}
+    experience={experience}
+    setExperience={setExperience}
   />
       )}
     </div>

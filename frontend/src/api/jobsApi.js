@@ -27,8 +27,14 @@ export const getProfile = async (token) => {
   return data.user;
 };
 
+export const updateProfile = async (
+  jobTitle,
+  city,
+  skills,
+  experience,
+  token
+) => {
 
-export const updateProfile = async (jobTitle, city, skills, token) => {
   const response = await fetch(`${API_URL}/profile`, {
     method: "PUT",
     headers: {
@@ -39,6 +45,7 @@ export const updateProfile = async (jobTitle, city, skills, token) => {
       jobTitle,
       city,
       skills,
+      experience,
     }),
   });
 

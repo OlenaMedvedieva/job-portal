@@ -53,6 +53,8 @@ const {
  setCity,
   skills,
   setSkills,
+  experience,
+  setExperience,
   saveProfile, 
   role,
   setRole,
@@ -131,6 +133,8 @@ const {
   setCity={setCity}
   skills={skills}
   setSkills={setSkills}
+  experience={experience}
+  setExperience={setExperience}
   saveProfile={async () => {
     const result = await saveProfile();
     setMessage(result);
