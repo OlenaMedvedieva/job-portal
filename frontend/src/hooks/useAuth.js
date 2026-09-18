@@ -4,6 +4,7 @@ import {
   getProfile,
   updateProfile,
   resendVerificationEmail,
+  getMyApplications,
 } from "../api/jobsApi";
 
 function useAuth() {
@@ -16,6 +17,7 @@ const [city, setCity] = useState("");
 const [skills, setSkills] = useState("");
 const [experience, setExperience] = useState("");
 const [education, setEducation] = useState("");
+const [applications, setApplications] = useState([]);
 const [role, setRole] = useState("job_seeker");
 const [user, setUser] = useState(null);
 const [message, setMessage] = useState("");
@@ -123,6 +125,22 @@ try {
   return error.message || "Cannot connect to the server";
 }
 };
+const loadApplications = async () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return "You are not logged in";
+  }
+
+  try {
+    const result = await getMyApplications(token);
+    setApplications(result);
+    return "Applications loaded successfully";
+  } catch (error) {
+    console.error("Load applications error:", error);
+    return error.message || "Failed to load applications";
+  }
+};
 
 const saveProfile = async () => {
   const token = localStorage.getItem("token");
@@ -201,6 +219,8 @@ return {
   message,
   handleSubmit,
   loadProfile,
+  loadApplications,
+  applications,
   saveProfile,
    resendVerification,
   logout,

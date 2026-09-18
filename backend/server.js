@@ -115,6 +115,21 @@ pool.query(`
   console.error("Jobs table error:", error);
 });
 
+pool.query(`
+  CREATE TABLE IF NOT EXISTS applications (
+    id SERIAL PRIMARY KEY,
+    job_id INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(job_id, user_id)
+  )
+`).then(() => {
+  console.log("Applications table is ready");
+}).catch((error) => {
+  console.error("Applications table error:", error);
+});
+
 
 app.use(cors());
 app.use(express.json());
@@ -426,7 +441,14 @@ app.put("/profile", authenticateToken, async (req, res) => {
        SET job_title = $1, city = $2, skills = $3, experience = $4, education = $5
        WHERE id = $6
        RETURNING id, name, email, role, job_title, city, skills, experience, education, created_at`,
-      [jobTitle || null, city || null, skills || null, experience || null, education || null, req.user.id]
+     [ 
+        jobTitle || null,
+        city || null,
+        skills || null, 
+        experience || null, 
+        education || null,
+        req.user.id
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -517,6 +539,37 @@ app.post("/jobs/:id/apply", authenticateToken, async (req, res) => {
 
     res.status(500).json({
       message: "Failed to submit application",
+    });
+  }
+});
+
+app.get("/applications/my", authenticateToken, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT
+        applications.id,
+        applications.job_id,
+        applications.status,
+        applications.created_at,
+        jobs.title,
+        jobs.company,
+        jobs.location,
+        jobs.salary
+       FROM applications
+       JOIN jobs ON applications.job_id = jobs.id
+       WHERE applications.user_id = $1
+       ORDER BY applications.created_at DESC`,
+      [req.user.id]
+    );
+
+    res.json({
+      applications: result.rows,
+    });
+  } catch (error) {
+    console.error("Get my applications error:", error);
+
+    res.status(500).json({
+      message: "Failed to load applications",
     });
   }
 });

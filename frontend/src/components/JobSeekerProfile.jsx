@@ -9,9 +9,12 @@ skills,
 setSkills,
 experience,
 setExperience,
-saveProfile,
 education,
 setEducation,
+applications,
+loadApplications,
+saveProfile,
+
 }) {
 const [isEditing, setIsEditing] = useState(false);
 const [message, setMessage] = useState("");
@@ -185,6 +188,32 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
       </button>
     </>
   )}
+
+<div className="my-applications">
+  <h3>My Applications</h3>
+
+  <button
+    type="button"
+    className="submit-button"
+    onClick={loadApplications}
+  >
+    Load my applications
+  </button>
+
+  {applications.length === 0 ? (
+    <p>No applications yet.</p>
+  ) : (
+    applications.map((application) => (
+      <div key={application.id} className="application-item">
+        <h4>{application.title}</h4>
+        <p><strong>Company:</strong> {application.company}</p>
+        <p><strong>Location:</strong> {application.location || "Not specified"}</p>
+        <p><strong>Salary:</strong> {application.salary || "Not specified"}</p>
+        <p><strong>Status:</strong> {application.status}</p>
+      </div>
+    ))
+  )}
+</div>
 
   {message && <p>{message}</p>}
 </div>

@@ -23,6 +23,11 @@ function Profile({
   setExperience,
   education,
   setEducation,
+  applications,
+  loadApplications,
+  jobApplications,
+  loadJobApplications,
+
 }) {
   const handleJobFormToggle = () => {
     if (showJobForm) {
@@ -85,6 +90,8 @@ function Profile({
     setExperience={setExperience}
     education={education}
     setEducation={setEducation}
+    applications={applications}
+    loadApplications={loadApplications}
   />
       )}
     </div>

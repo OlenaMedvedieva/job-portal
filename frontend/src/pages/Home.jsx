@@ -17,6 +17,8 @@ const [message, setMessage] = useState("");
 const {
   jobs,
   showJobForm,
+  jobApplications,
+  loadJobApplications,
   setShowJobForm,
   editingJobId,
   setEditingJobId,
@@ -57,6 +59,8 @@ const {
   setExperience,
   education,
   setEducation,
+  applications,
+  loadApplications,
   saveProfile, 
   role,
   setRole,
@@ -139,6 +143,10 @@ const {
   setExperience={setExperience}
   education={education}
   setEducation={setEducation}
+  applications={applications}
+  loadApplications={loadApplications}
+  jobApplications={jobApplications}
+  loadJobApplications={loadJobApplications}
   saveProfile={async () => {
     const result = await saveProfile();
     setMessage(result);

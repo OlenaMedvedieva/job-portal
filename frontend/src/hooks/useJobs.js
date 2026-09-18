@@ -1,11 +1,17 @@
 import { useState } from "react";
-import { deleteJob as deleteJobApi, getJobs, saveJob } from "../api/jobsApi";
+import {
+  deleteJob as deleteJobApi,
+  getJobs,
+  saveJob,
+  getJobApplications,
+} from "../api/jobsApi";
+
 
 function useJobs() {
   const [jobs, setJobs] = useState([]);
+  const [jobApplications, setJobApplications] = useState([]);
   const [showJobForm, setShowJobForm] = useState(false);
   const [editingJobId, setEditingJobId] = useState(null);
-
   const [jobTitle, setJobTitle] = useState("");
   const [jobCompany, setJobCompany] = useState("");
   const [jobLocation, setJobLocation] = useState("");
@@ -19,6 +25,24 @@ function useJobs() {
 
       setJobs(jobs);
       setMessage("Jobs loaded successfully");
+    } catch (error) {
+      console.error(error);
+      setMessage(error.message || "Cannot connect to the server");
+    }
+  };
+    const loadJobApplications = async (jobId, setMessage) => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setMessage("You are not logged in");
+      return;
+    }
+
+    try {
+      const applications = await getJobApplications(jobId, token);
+
+      setJobApplications(applications);
+      setMessage("Applications loaded successfully");
     } catch (error) {
       console.error(error);
       setMessage(error.message || "Cannot connect to the server");
@@ -125,6 +149,8 @@ if (salaryMatch) {
 
   return {
     jobs,
+    jobApplications,
+    loadJobApplications,
     showJobForm,
     setShowJobForm,
     editingJobId,
