@@ -32,6 +32,7 @@ export const updateProfile = async (
   city,
   skills,
   experience,
+  education,
   token
 ) => {
 
@@ -46,6 +47,7 @@ export const updateProfile = async (
       city,
       skills,
       experience,
+      education,
     }),
   });
 

@@ -55,6 +55,8 @@ const {
   setSkills,
   experience,
   setExperience,
+  education,
+  setEducation,
   saveProfile, 
   role,
   setRole,
@@ -135,6 +137,8 @@ const {
   setSkills={setSkills}
   experience={experience}
   setExperience={setExperience}
+  education={education}
+  setEducation={setEducation}
   saveProfile={async () => {
     const result = await saveProfile();
     setMessage(result);

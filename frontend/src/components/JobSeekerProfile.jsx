@@ -10,6 +10,8 @@ setSkills,
 experience,
 setExperience,
 saveProfile,
+education,
+setEducation,
 }) {
 const [isEditing, setIsEditing] = useState(false);
 const [message, setMessage] = useState("");
@@ -86,7 +88,8 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
       <p>{city || "City not specified"}</p>
       <p>{skills || "Skills not specified"}</p>
        <p>{experience || "Experience not specified"}</p>
-
+      <p>{education || "Education not specified"}</p>
+     
       <button
         className="submit-button"
         type="button"
@@ -160,6 +163,16 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
     onChange={(event) => setExperience(event.target.value)}
     placeholder="Describe your work experience..."
     rows="4"
+  />
+</label>
+
+<label>
+  Education
+  <textarea
+    value={education}
+    onChange={(event) => setEducation(event.target.value)}
+    placeholder="e.g. Computer Science, University of Krakow"
+    rows="3"
   />
 </label>
 
