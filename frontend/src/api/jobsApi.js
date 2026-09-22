@@ -103,6 +103,27 @@ export const updateApplicationStatus = async (
 
   return data;
 };
+export const withdrawApplication = async (applicationId, token) => {
+  const response = await fetch(
+    `${API_URL}/applications/${applicationId}/withdraw`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Failed to withdraw application"
+    );
+  }
+
+  return data;
+};
 
 export const getJobApplications = async (jobId, token) => {
   const response = await fetch(`${API_URL}/jobs/${jobId}/applications`, {

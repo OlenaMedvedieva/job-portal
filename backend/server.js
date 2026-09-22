@@ -721,6 +721,44 @@ app.put("/applications/:id/status", authenticateToken, async (req, res) => {
   }
 });
 
+app.put("/applications/:id/withdraw", authenticateToken, async (req, res) => {
+  try {
+    const applicationId = req.params.id;
+
+    const result = await pool.query(
+      `UPDATE applications
+       SET status = 'withdrawn'
+       WHERE id = $1
+         AND user_id = $2
+         AND status IN ('pending', 'accepted')
+       RETURNING
+         id,
+         job_id,
+         user_id,
+         status,
+         created_at`,
+      [applicationId, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Application not found or cannot be withdrawn",
+      });
+    }
+
+    res.json({
+      message: "Application withdrawn successfully",
+      application: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Withdraw application error:", error);
+
+    res.status(500).json({
+      message: "Failed to withdraw application",
+    });
+  }
+});
+
 app.put("/jobs/:id", authenticateToken, async (req, res) => {
   try {
     const jobId = req.params.id;

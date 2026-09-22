@@ -52,7 +52,7 @@ const {
   jobTitle: jobSeekerJobTitle,
   setJobTitle: setJobSeekerJobTitle,
   city,
- setCity,
+  setCity,
   skills,
   setSkills,
   experience,
@@ -61,6 +61,7 @@ const {
   setEducation,
   applications,
   loadApplications,
+  withdrawApplication,
   saveProfile, 
   role,
   setRole,
@@ -145,8 +146,10 @@ const {
   setEducation={setEducation}
   applications={applications}
   loadApplications={loadApplications}
+  withdrawApplication={withdrawApplication}
   jobApplications={jobApplications}
   loadJobApplications={loadJobApplications}
+  
   saveProfile={async () => {
     const result = await saveProfile();
     setMessage(result);

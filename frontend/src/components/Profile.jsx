@@ -25,6 +25,7 @@ function Profile({
   setEducation,
   applications,
   loadApplications,
+  withdrawApplication,
   jobApplications,
   loadJobApplications,
 
@@ -92,6 +93,7 @@ function Profile({
     setEducation={setEducation}
     applications={applications}
     loadApplications={loadApplications}
+    withdrawApplication={withdrawApplication}
   />
       )}
     </div>

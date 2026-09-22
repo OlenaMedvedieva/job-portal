@@ -5,6 +5,7 @@ import {
   updateProfile,
   resendVerificationEmail,
   getMyApplications,
+  withdrawApplication
 } from "../api/jobsApi";
 
 function useAuth() {
@@ -141,6 +142,30 @@ const loadApplications = async () => {
     return error.message || "Failed to load applications";
   }
 };
+const withdrawApplicationForUser = async (applicationId) => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    return "You are not logged in";
+  }
+
+  try {
+    const result = await withdrawApplication(applicationId, token);
+
+    setApplications((currentApplications) =>
+      currentApplications.map((application) =>
+        application.id === applicationId
+          ? result.application
+          : application
+      )
+    );
+
+    return result.message;
+  } catch (error) {
+    console.error("Withdraw application error:", error);
+    return error.message || "Failed to withdraw application";
+  }
+};
 
 const saveProfile = async () => {
   const token = localStorage.getItem("token");
@@ -220,6 +245,7 @@ return {
   handleSubmit,
   loadProfile,
   loadApplications,
+  withdrawApplication: withdrawApplicationForUser,
   applications,
   saveProfile,
    resendVerification,

@@ -13,6 +13,7 @@ education,
 setEducation,
 applications,
 loadApplications,
+withdrawApplication,
 saveProfile,
 
 }) {
@@ -76,6 +77,18 @@ setMessage(result);
 setIsEditing(false);
 
 
+};
+
+const handleWithdraw = async (applicationId) => {
+  try {
+    const result = await withdrawApplication(applicationId);
+
+    setMessage(result.message);
+
+    await loadApplications();
+  } catch (error) {
+    setMessage(error.message);
+  }
 };
 
 return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
@@ -210,7 +223,18 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
         <p><strong>Location:</strong> {application.location || "Not specified"}</p>
         <p><strong>Salary:</strong> {application.salary || "Not specified"}</p>
         <p><strong>Status:</strong> {application.status}</p>
+      {(application.status === "pending" ||
+  application.status === "accepted") && (
+  <button
+    type="button"
+    className="submit-button"
+    onClick={() => handleWithdraw(application.id)}
+  >
+    Withdraw application
+  </button>
+)}
       </div>
+
     ))
   )}
 </div>
