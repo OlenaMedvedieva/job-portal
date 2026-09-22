@@ -513,35 +513,7 @@ app.post("/jobs", authenticateToken, async (req, res) => {
     });
   }
 });
-app.post("/jobs/:id/apply", authenticateToken, async (req, res) => {
-  try {
-    const jobId = req.params.id;
 
-    const result = await pool.query(
-      `INSERT INTO applications (job_id, user_id)
-       VALUES ($1, $2)
-       RETURNING id, job_id, user_id, status, created_at`,
-      [jobId, req.user.id]
-    );
-
-    res.status(201).json({
-      message: "Application submitted successfully",
-      application: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Apply for job error:", error);
-
-    if (error.code === "23505") {
-      return res.status(409).json({
-        message: "You have already applied for this job",
-      });
-    }
-
-    res.status(500).json({
-      message: "Failed to submit application",
-    });
-  }
-});
 
 app.get("/applications/my", authenticateToken, async (req, res) => {
   try {
@@ -636,6 +608,55 @@ app.get("/jobs/:id", async (req, res) => {
 
     res.status(500).json({
       message: "Failed to load job",
+    });
+  }
+});
+
+app.post("/jobs/:id/apply", authenticateToken, async (req, res) => {
+  try {
+    const jobId = req.params.id;
+    const userId = req.user.id;
+
+    const jobResult = await pool.query(
+      `SELECT id
+       FROM jobs
+       WHERE id = $1`,
+      [jobId]
+    );
+
+    if (jobResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Job not found",
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO applications (job_id, user_id, status)
+       VALUES ($1, $2, 'pending')
+       RETURNING
+         id,
+         job_id,
+         user_id,
+         status,
+         created_at`,
+      [jobId, userId]
+    );
+
+    res.status(201).json({
+      message: "Application submitted successfully",
+      application: result.rows[0],
+    });
+  } catch (error) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        message: "You have already applied for this job",
+      });
+    }
+
+    console.error("Apply for job error:", error);
+
+    res.status(500).json({
+      message: "Failed to submit application",
     });
   }
 });
