@@ -675,6 +675,52 @@ app.get("/jobs/:id/applications", authenticateToken, async (req, res) => {
   }
 });
 
+app.put("/applications/:id/status", authenticateToken, async (req, res) => {
+  try {
+    const applicationId = req.params.id;
+    const { status } = req.body;
+
+    if (!["accepted", "rejected"].includes(status)) {
+      return res.status(400).json({
+        message: "Invalid application status",
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE applications
+       SET status = $1
+       FROM jobs
+       WHERE applications.id = $2
+         AND applications.job_id = jobs.id
+         AND jobs.user_id = $3
+       RETURNING
+         applications.id,
+         applications.job_id,
+         applications.user_id,
+         applications.status,
+         applications.created_at`,
+      [status, applicationId, req.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Application not found",
+      });
+    }
+
+    res.json({
+      message: "Application status updated successfully",
+      application: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Update application status error:", error);
+
+    res.status(500).json({
+      message: "Failed to update application status",
+    });
+  }
+});
+
 app.put("/jobs/:id", authenticateToken, async (req, res) => {
   try {
     const jobId = req.params.id;

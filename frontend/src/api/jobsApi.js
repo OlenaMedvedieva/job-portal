@@ -76,6 +76,34 @@ export const getMyApplications = async (token) => {
   return data.applications;
 };
 
+export const updateApplicationStatus = async (
+  applicationId,
+  status,
+  token
+) => {
+  const response = await fetch(
+    `${API_URL}/applications/${applicationId}/status`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Failed to update application status"
+    );
+  }
+
+  return data;
+};
+
 export const getJobApplications = async (jobId, token) => {
   const response = await fetch(`${API_URL}/jobs/${jobId}/applications`, {
     headers: {

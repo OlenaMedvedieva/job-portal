@@ -1,10 +1,35 @@
 import { useEffect, useState } from "react";
-
+import { updateApplicationStatus } from "../api/jobsApi";
 const API_URL = "http://localhost:3000";
 
 function Applications({ jobId }) {
   const [applications, setApplications] = useState([]);
   const [message, setMessage] = useState("");
+
+const handleStatusChange = async (applicationId, status) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const result = await updateApplicationStatus(
+      applicationId,
+      status,
+      token
+    );
+
+    setApplications((currentApplications) =>
+      currentApplications.map((application) =>
+        application.id === applicationId
+          ? result.application
+          : application
+      )
+    );
+
+    setMessage("Application status updated successfully");
+  } catch (error) {
+    console.error(error);
+    setMessage(error.message || "Failed to update application status");
+  }
+};
 
   useEffect(() => {
     const loadApplications = async () => {
@@ -65,6 +90,24 @@ function Applications({ jobId }) {
           <p>
             <strong>Status:</strong> {application.status}
           </p>
+{application.status === "pending" && (
+  <div className="application-actions">
+    <button
+      type="button"
+      onClick={() => handleStatusChange(application.id, "accepted")}
+    >
+      Accept
+    </button>
+
+    <button
+      type="button"
+      onClick={() => handleStatusChange(application.id, "rejected")}
+    >
+      Reject
+    </button>
+  </div>
+)}
+
         </div>
       ))}
     </div>
