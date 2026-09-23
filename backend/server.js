@@ -145,8 +145,11 @@ app.use(express.json({ limit: "20mb" }));
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
-
-  if (!token) {
+ 
+  console.log("AUTH HEADER:", authHeader ? "Bearer token received" : "NO TOKEN");
+  console.log("TOKEN LENGTH:", token ? token.length : 0);
+ 
+if (!token) {
     return res.status(401).json({
       message: "Access token is required",
     });

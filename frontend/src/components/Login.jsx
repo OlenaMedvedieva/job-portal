@@ -9,7 +9,12 @@ function Login({
 
     const [showPassword, setShowPassword] = useState(false);
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={(event)=> {
+      console.log("LOGIN FORM SUBMIT");
+       console.log("HANDLE SUBMIT:", handleSubmit);
+  handleSubmit(event);
+}}>
+  
       <label>
         Email
         <input

@@ -80,6 +80,8 @@ const body =
     : { name, email, password, role };
 
 try {
+  console.log("LOGIN FETCH:", API_URL, endpoint, body);
+
   const response = await fetch(`${API_URL}${endpoint}`, {
     method: "POST",
     headers: {
@@ -196,15 +198,15 @@ const saveProfile = async () => {
   try {
     console.log("SAVING JOB TITLE:", jobTitle);
 
-    const result = await updateProfile(token, {
-      jobTitle,
-      city,
-      skills,
-      experience,
-      education,
-      profileImage,
-    });
-
+   const result = await updateProfile(
+  jobTitle,
+  city,
+  skills,
+  experience,
+  education,
+  profileImage,
+  token
+);
     console.log("UPDATE PROFILE RESULT:", result);
 
     setUser(result.user);

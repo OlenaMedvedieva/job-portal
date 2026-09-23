@@ -1,5 +1,4 @@
-export const API_URL = "http://localhost:3000";
-
+export const API_URL = "http://172.23.47.70:3000";
 export const getJobs = async () => {
   const response = await fetch(`${API_URL}/jobs`);
   const data = await response.json();
@@ -33,6 +32,7 @@ export const updateProfile = async (
   skills,
   experience,
   education,
+  profileImage,
   token
 ) => {
 
@@ -48,6 +48,7 @@ export const updateProfile = async (
       skills,
       experience,
       education,
+      profileImage
     }),
   });
 

@@ -19,6 +19,8 @@ withdrawApplication,
 saveProfile,
 
 }) {
+  console.log("PROFILE IMAGE:", profileImage);
+
 const [isEditing, setIsEditing] = useState(false);
 const [message, setMessage] = useState("");
 const [citySuggestions, setCitySuggestions] = useState([]);
@@ -49,7 +51,8 @@ useEffect(() => {
       console.log("CITY SEARCH:", city);
 
 const response = await fetch(
-  `http://localhost:3000/locations/search?text=${encodeURIComponent(city)}`
+  `http://172.23.47.70:3000/locations/search?text=${encodeURIComponent(city)}`
+
 );
 
 console.log("CITY RESPONSE:", response.status);
@@ -94,38 +97,39 @@ const handleWithdraw = async (applicationId) => {
 };
 
 return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
-
 <div className="profile-photo-field">
-  <label>
-    Profile photo
-    <input
-  type="file"
-  accept="image/*"
-  id="profile-image-input"
-  onChange={(event) => {
-    const file = event.target.files[0];
-
-    if (!file) {
-      return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      setProfileImage(reader.result);
-    };
-
-    reader.readAsDataURL(file);
-  }}
-/>
-  </label>
-
-  {profileImage && (
+  {profileImage ? (
     <img
       src={profileImage}
       alt="Profile"
       className="profile-photo-preview"
+      onLoad={() => console.log("PHOTO LOADED")}
+      onError={() => console.log("PHOTO ERROR")}
     />
+  ) : (
+    <label>
+      Profile photo
+      <input
+        type="file"
+        accept="image/*"
+        id="profile-image-input"
+        onChange={(event) => {
+          const file = event.target.files[0];
+
+          if (!file) {
+            return;
+          }
+
+          const reader = new FileReader();
+
+          reader.onloadend = () => {
+            setProfileImage(reader.result);
+          };
+
+          reader.readAsDataURL(file);
+        }}
+      />
+    </label>
   )}
 </div>
 
