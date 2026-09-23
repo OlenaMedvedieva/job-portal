@@ -158,3 +158,122 @@ code {
   font-size: 13px;
   line-height: 1.4;
 }
+/* Job Seekers */
+.job-seekers {
+  margin-top: 32px;
+  text-align: left;
+}
+
+.job-seekers h3 {
+  margin-bottom: 18px;
+  color: #1f2937;
+  font-size: 24px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.job-seeker-card {
+  margin-bottom: 14px;
+  padding: 0;
+  border: 1px solid #d9e2ec;
+  border-radius: 14px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.job-seeker-card h4 {
+  margin: 0;
+}
+
+.job-seeker-card h4 button {
+  width: 100%;
+  padding: 18px 20px;
+  border: none;
+  background: #ffffff;
+  color: #1e5f74;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.job-seeker-card h4 button:hover {
+  background: #eef7f8;
+}
+
+.job-seeker-card > div {
+  margin: 0;
+  padding: 18px 20px;
+  border-top: 1px solid #d9e2ec;
+  background: #f8fafc;
+}
+
+.job-seeker-card p {
+  margin: 9px 0;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.job-seeker-card strong {
+  color: #1f2937;
+}
+/* Job Seeker Header */
+
+.job-seeker-header button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 18px 20px;
+  border: none;
+  background: #ffffff;
+  color: #1e5f74;
+  text-align: left;
+  cursor: pointer;
+}
+
+.job-seeker-avatar {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #dff1f2;
+  color: #1e5f74;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.job-seeker-name {
+  display: inline-block;
+  font-size: 18px;
+  font-weight: 600;
+}
+.job-seeker-avatar {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #dff1f2;
+  color: #1e5f74;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.job-seeker-name {
+  display: block;
+}
+.profile-photo-preview {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  margin-top: 12px;
+}

@@ -62,6 +62,8 @@ const {
   applications,
   loadApplications,
   withdrawApplication,
+  jobSeekers,
+  loadJobSeekers,
   saveProfile, 
   role,
   setRole,
@@ -69,6 +71,8 @@ const {
   message: authMessage,
   handleSubmit,
   loadProfile,
+  profileImage,
+  setProfileImage,
   resendVerification,
   logout,
 } = useAuth();
@@ -145,6 +149,10 @@ const {
   education={education}
   setEducation={setEducation}
   applications={applications}
+  jobSeekers={jobSeekers}
+  loadJobSeekers={loadJobSeekers}
+  profileImage={profileImage}
+  setProfileImage={setProfileImage}
   loadApplications={loadApplications}
   withdrawApplication={withdrawApplication}
   jobApplications={jobApplications}
@@ -171,7 +179,7 @@ const {
   logout={logout}
 />
 
-{showJobForm && (
+{showJobForm && user.role === "employer" && (
   <JobForm
     editingJobId={editingJobId}
     jobTitle={jobTitle}

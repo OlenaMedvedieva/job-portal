@@ -5,7 +5,8 @@ import {
   updateProfile,
   resendVerificationEmail,
   getMyApplications,
-  withdrawApplication
+  withdrawApplication,
+  getJobSeekers
 } from "../api/jobsApi";
 
 function useAuth() {
@@ -14,11 +15,13 @@ const [name, setName] = useState("");
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
 const [jobTitle, setJobTitle] = useState("");
+const [profileImage, setProfileImage] = useState("");
 const [city, setCity] = useState("");
 const [skills, setSkills] = useState("");
 const [experience, setExperience] = useState("");
 const [education, setEducation] = useState("");
 const [applications, setApplications] = useState([]);
+const [jobSeekers, setJobSeekers] = useState([]);
 const [role, setRole] = useState("job_seeker");
 const [user, setUser] = useState(null);
 const [message, setMessage] = useState("");
@@ -49,6 +52,7 @@ const restoreUser = async () => {
 
     setUser(data.user);
     setJobTitle(data.user.job_title || "");
+    setProfileImage(data.user.profile_image || "");
     setCity(data.user.city || "");
     setSkills(data.user.skills || "");
     setExperience(data.user.experience || "");
@@ -126,6 +130,22 @@ try {
   return error.message || "Cannot connect to the server";
 }
 };
+const loadJobSeekers = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return;
+    }
+
+    const data = await getJobSeekers(token);
+
+    setJobSeekers(data);
+  } catch (error) {
+    console.error("Load job seekers error:", error);
+  }
+};
+
 const loadApplications = async () => {
   const token = localStorage.getItem("token");
 
@@ -166,7 +186,6 @@ const withdrawApplicationForUser = async (applicationId) => {
     return error.message || "Failed to withdraw application";
   }
 };
-
 const saveProfile = async () => {
   const token = localStorage.getItem("token");
 
@@ -177,14 +196,15 @@ const saveProfile = async () => {
   try {
     console.log("SAVING JOB TITLE:", jobTitle);
 
-    const result = await updateProfile(
+    const result = await updateProfile(token, {
       jobTitle,
       city,
       skills,
       experience,
       education,
-      token
-    );
+      profileImage,
+    });
+
     console.log("UPDATE PROFILE RESULT:", result);
 
     setUser(result.user);
@@ -195,7 +215,6 @@ const saveProfile = async () => {
     return error.message || "Failed to save profile";
   }
 };
-
 const resendVerification = async () => {
   if (!email) {
     return "Please enter your email";
@@ -247,6 +266,10 @@ return {
   loadApplications,
   withdrawApplication: withdrawApplicationForUser,
   applications,
+  profileImage,
+  setProfileImage,
+  jobSeekers,
+  loadJobSeekers,
   saveProfile,
    resendVerification,
   logout,

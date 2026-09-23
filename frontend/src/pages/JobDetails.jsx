@@ -83,6 +83,9 @@ function JobDetails() {
         <strong>Salary:</strong> {job.salary}
       </p>
 
+      <p><strong>Views:</strong> {job.views || 0}</p>
+       <p><strong>Applications:</strong> {job.applications_count || 0}</p>
+      
       <p>{job.description}</p>
 
       <small>Posted by: {job.author}</small>

@@ -19,8 +19,11 @@ const handleStatusChange = async (applicationId, status) => {
     setApplications((currentApplications) =>
       currentApplications.map((application) =>
         application.id === applicationId
-          ? result.application
-          : application
+        ? {
+    ...application,
+    ...result.application,
+  }
+: application
       )
     );
 

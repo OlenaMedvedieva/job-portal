@@ -5,6 +5,8 @@ jobTitle,
 setJobTitle,
 city,
 setCity,
+profileImage,
+setProfileImage,
 skills, 
 setSkills,
 experience,
@@ -93,6 +95,39 @@ const handleWithdraw = async (applicationId) => {
 
 return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
 
+<div className="profile-photo-field">
+  <label>
+    Profile photo
+    <input
+  type="file"
+  accept="image/*"
+  id="profile-image-input"
+  onChange={(event) => {
+    const file = event.target.files[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      setProfileImage(reader.result);
+    };
+
+    reader.readAsDataURL(file);
+  }}
+/>
+  </label>
+
+  {profileImage && (
+    <img
+      src={profileImage}
+      alt="Profile"
+      className="profile-photo-preview"
+    />
+  )}
+</div>
 
   <label>
     What job are you looking for?

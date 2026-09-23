@@ -182,6 +182,22 @@ export const saveJob = async (jobId, jobData, token) => {
   return data;
 };
 
+export const getJobSeekers = async (token) => {
+  const response = await fetch(`${API_URL}/job-seekers`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load job seekers");
+  }
+
+  return data.jobSeekers;
+};
+
 export const resendVerificationEmail = async (email) => {
   const response = await fetch(`${API_URL}/resend-verification`, {
     method: "POST",
