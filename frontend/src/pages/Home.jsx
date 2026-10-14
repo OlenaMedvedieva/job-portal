@@ -158,10 +158,12 @@ const {
   jobApplications={jobApplications}
   loadJobApplications={loadJobApplications}
   
-  saveProfile={async () => {
-    const result = await saveProfile();
-    setMessage(result);
-  }}
+saveProfile={async (overrides) => {
+  const result = await saveProfile(overrides);
+  setMessage(result);
+  return result;
+}}
+
   user={user}
   loadProfile={async () => {
     const result = await loadProfile();

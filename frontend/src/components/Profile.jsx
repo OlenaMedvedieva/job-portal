@@ -37,6 +37,7 @@ function Profile({
 }) {
   const [showJobSeekers, setShowJobSeekers] = useState(false);
   const [selectedJobSeeker, setSelectedJobSeeker] = useState(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const handleJobFormToggle = () => {
     if (showJobForm) {
       setShowJobForm(false);
@@ -52,15 +53,64 @@ function Profile({
     setShowJobForm(true);
   };
 
-  const handleSaveProfile = async () => {
-    const result = await saveProfile();
-    return result;
-  };
-
+  const handleSaveProfile = async (overrides = {}) => {
+  const result = await saveProfile(overrides);
+  return result;
+};
   return (
-    <div className="profile">
-      <h2>Welcome, {user.name}!</h2>
+  <div className="profile">
+   <div className="profile-top">
+  <div className="welcome-header">
+    {user.role === "job_seeker" && profileImage && (
+      <img
+        src={profileImage}
+        alt="Profile"
+        className="welcome-photo"
+      />
+    )}
 
+    <h2>Welcome, {user.name}!</h2>
+  </div>
+
+  {user.role === "job_seeker" && (
+    <div className="profile-menu-container">
+      <button
+        type="button"
+        className="profile-menu-button"
+        aria-label="Profile options"
+        aria-expanded={showProfileMenu}
+        onClick={() => setShowProfileMenu(!showProfileMenu)}
+      >
+        ⋮
+      </button>
+
+      {showProfileMenu && (
+        <div className="profile-menu">
+          <button
+            type="button"
+            onClick={() => {
+              setShowProfileMenu(false);
+              window.dispatchEvent(new Event("edit-profile"));
+            }}
+          >
+            ✎ Edit profile
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setShowProfileMenu(false);
+              window.dispatchEvent(new Event("change-profile-photo"));
+            }}
+          >
+            📷 Change photo
+          </button>
+        </div>
+      )}
+    </div>
+  )}
+</div>
+ 
       <p>{user.email}</p>
 
       <p>

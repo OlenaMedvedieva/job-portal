@@ -96,11 +96,17 @@ try {
     setMessage(data.message || "Something went wrong");
     return;
   }
+if (mode === "login") {
+  localStorage.setItem("token", data.token);
+  setUser(data.user);
+  setJobTitle(data.user.job_title || "");
+  setProfileImage(data.user.profile_image || "");
+  setCity(data.user.city || "");
+  setSkills(data.user.skills || "");
+  setExperience(data.user.experience || "");
+  setEducation(data.user.education || "");
+  setMessage("Login successful!");
 
-  if (mode === "login") {
-    localStorage.setItem("token", data.token);
-    setUser(data.user);
-    setMessage("Login successful!");
   } else {
     setMessage("Registration successful! You can now log in.");
     setMode("login");
@@ -188,7 +194,7 @@ const withdrawApplicationForUser = async (applicationId) => {
     return error.message || "Failed to withdraw application";
   }
 };
-const saveProfile = async () => {
+const saveProfile = async (overrides = {}) => {
   const token = localStorage.getItem("token");
 
   if (!token) {
@@ -204,12 +210,18 @@ const saveProfile = async () => {
   skills,
   experience,
   education,
-  profileImage,
+  overrides.profileImage ?? profileImage,
   token
 );
     console.log("UPDATE PROFILE RESULT:", result);
-
-    setUser(result.user);
+   console.log("PHOTO SENT:", overrides.profileImage ?? profileImage);
+   console.log("PHOTO RETURNED BY SERVER:", result.user.profile_image);
+    console.log(
+  "SAVED IMAGE LENGTH:",
+  result.user.profile_image?.length
+);
+   setUser(result.user);
+    setProfileImage(result.user.profile_image || "");
 
     return "Profile saved successfully!";
   } catch (error) {

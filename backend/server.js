@@ -447,6 +447,7 @@ app.get("/profile", authenticateToken, async (req, res) => {
 });
 
 app.put("/profile", authenticateToken, async (req, res) => {
+  console.log("PROFILE UPDATE ROUTE HIT");
   try {
      const {
       jobTitle,
@@ -456,6 +457,10 @@ app.put("/profile", authenticateToken, async (req, res) => {
       education,
       profileImage,
      } = req.body;
+     console.log(
+  "PHOTO RECEIVED LENGTH:",
+  typeof profileImage === "string" ? profileImage.length : "MISSING"
+);
     const result = await pool.query(
       `UPDATE users
        SET job_title = $1, city = $2, skills = $3, experience = $4, education = $5, profile_image = $6
@@ -498,7 +503,7 @@ app.get("/job-seekers", authenticateToken, async (req, res) => {
         message: "Only employers can view job seekers",
       });
     }
-
+console.log("PHOTO RECEIVED BY SERVER:", profileImage ? profileImage.substring(0, 80) : "EMPTY");
     const result = await pool.query(
       `SELECT
         id,

@@ -22,6 +22,24 @@ saveProfile,
   console.log("PROFILE IMAGE:", profileImage);
 
 const [isEditing, setIsEditing] = useState(false);
+useEffect(() => {
+  const handleEditProfile = () => {
+    setMessage("");
+    setIsEditing(true);
+  };
+
+  const handleChangePhoto = () => {
+    document.getElementById("profile-image-input")?.click();
+  };
+
+  window.addEventListener("edit-profile", handleEditProfile);
+  window.addEventListener("change-profile-photo", handleChangePhoto);
+
+  return () => {
+    window.removeEventListener("edit-profile", handleEditProfile);
+    window.removeEventListener("change-profile-photo", handleChangePhoto);
+  };
+}, []);
 const [message, setMessage] = useState("");
 const [citySuggestions, setCitySuggestions] = useState([]);
 const [cityLoading, setCityLoading] = useState(false);
@@ -103,62 +121,65 @@ return (
       <div className="profile-header-left">
         <h2>My Job Seeker Profile</h2>
 
-        {profileImage && (
-          <img
-            src={profileImage}
-            alt="Profile"
-            className="profile-photo-preview"
-          />
-        )}
+       
       </div>
 
-      <div className="profile-header-actions">
-        <button
-          type="button"
-          className="submit-button"
-          onClick={() => {
-            setMessage("");
-            setIsEditing(true);
-          }}
-        >
-          Edit profile
-        </button>
-
-        <button
-          type="button"
-          className="submit-button"
-          onClick={() =>
-            document.getElementById("profile-image-input").click()
-          }
-        >
-          Change photo
-        </button>
-      </div>
-    </div>
-
+</div>
 <div className="profile-photo-field">
-  <input
+ <input
     type="file"
     accept="image/*"
     id="profile-image-input"
     style={{ display: "none" }}
-    onChange={(event) => {
-      const file = event.target.files[0];
+    
+onChange={(event) => {
+  const file = event.target.files[0];
 
-      if (!file) return;
+  if (!file) return;
 
-      const reader = new FileReader();
+  if (!file.type.startsWith("image/")) {
+    setMessage("Please select an image file.");
+    return;
+  }
 
-      reader.onloadend = () => {
-        if (reader.result) {
-          setProfileImage(reader.result);
-        }
-      };
+  if (file.size > 2 * 1024 * 1024) {
+    setMessage("Image must be smaller than 2 MB.");
+    return;
+  }
 
-      reader.readAsDataURL(file);
-    }}
+  const reader = new FileReader();
+
+  reader.onloadend = async () => {
+    if (!reader.result) return;
+
+    setProfileImage(reader.result);
+setMessage("Saving profile photo...");
+
+console.log("PHOTO TO SAVE LENGTH:", reader.result.length);
+
+const result = await saveProfile({
+  profileImage: reader.result,
+});
+
+console.log("SAVE RESULT:", result);
+    
+   console.log("SELECTED FILE:", file.name, file.type, file.size);
+console.log("IMAGE DATA LENGTH:", reader.result?.length);
+console.log("IMAGE DATA START:", String(reader.result).slice(0, 50));
+
+    setMessage(
+      typeof result === "string"
+        ? result
+        : "Profile photo saved."
+    );
+  };
+
+  reader.readAsDataURL(file);
+}}
+
   />
 </div>
+
 
 
   <label>

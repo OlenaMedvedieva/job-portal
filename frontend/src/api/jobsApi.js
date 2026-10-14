@@ -35,7 +35,7 @@ export const updateProfile = async (
   profileImage,
   token
 ) => {
-
+console.log("API PHOTO LENGTH:", profileImage?.length);
   const response = await fetch(`${API_URL}/profile`, {
     method: "PUT",
     headers: {
