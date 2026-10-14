@@ -504,6 +504,7 @@ app.get("/job-seekers", authenticateToken, async (req, res) => {
         id,
         name,
         email,
+        profile_image,
         job_title,
         city,
         skills,

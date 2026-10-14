@@ -96,42 +96,70 @@ const handleWithdraw = async (applicationId) => {
   }
 };
 
-return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
-<div className="profile-photo-field">
-  {profileImage ? (
-    <img
-      src={profileImage}
-      alt="Profile"
-      className="profile-photo-preview"
-      onLoad={() => console.log("PHOTO LOADED")}
-      onError={() => console.log("PHOTO ERROR")}
-    />
-  ) : (
-    <label>
-      Profile photo
-      <input
-        type="file"
-        accept="image/*"
-        id="profile-image-input"
-        onChange={(event) => {
-          const file = event.target.files[0];
 
-          if (!file) {
-            return;
+return (
+  <div className="job-seeker-profile">
+    <div className="profile-header">
+      <div className="profile-header-left">
+        <h2>My Job Seeker Profile</h2>
+
+        {profileImage && (
+          <img
+            src={profileImage}
+            alt="Profile"
+            className="profile-photo-preview"
+          />
+        )}
+      </div>
+
+      <div className="profile-header-actions">
+        <button
+          type="button"
+          className="submit-button"
+          onClick={() => {
+            setMessage("");
+            setIsEditing(true);
+          }}
+        >
+          Edit profile
+        </button>
+
+        <button
+          type="button"
+          className="submit-button"
+          onClick={() =>
+            document.getElementById("profile-image-input").click()
           }
+        >
+          Change photo
+        </button>
+      </div>
+    </div>
 
-          const reader = new FileReader();
+<div className="profile-photo-field">
+  <input
+    type="file"
+    accept="image/*"
+    id="profile-image-input"
+    style={{ display: "none" }}
+    onChange={(event) => {
+      const file = event.target.files[0];
 
-          reader.onloadend = () => {
-            setProfileImage(reader.result);
-          };
+      if (!file) return;
 
-          reader.readAsDataURL(file);
-        }}
-      />
-    </label>
-  )}
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        if (reader.result) {
+          setProfileImage(reader.result);
+        }
+      };
+
+      reader.readAsDataURL(file);
+    }}
+  />
 </div>
+
 
   <label>
     What job are you looking for?
@@ -145,16 +173,7 @@ return ( <div className="job-seeker-profile"> <h2>My Job Seeker Profile</h2>
        <p>{experience || "Experience not specified"}</p>
       <p>{education || "Education not specified"}</p>
      
-      <button
-        className="submit-button"
-        type="button"
-        onClick={() => {
-          setMessage("");
-          setIsEditing(true);
-        }}
-      >
-        Edit
-      </button>
+      
     </>
   ) : (
     <>

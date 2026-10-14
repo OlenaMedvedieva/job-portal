@@ -284,3 +284,39 @@ code {
   border-radius: 50%;
   display: block;
 }
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.profile-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.profile-header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.profile-header-actions .submit-button {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .profile-header {
+    gap: 8px;
+  }
+
+  .profile-header-actions .submit-button {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
