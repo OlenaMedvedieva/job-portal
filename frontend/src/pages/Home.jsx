@@ -1,4 +1,4 @@
-import {  useState } from "react";
+import { useEffect, useState } from "react";
 import useAuth from "../hooks/useAuth.js";
 import useJobs from "../hooks/useJobs.js";
 import { useNavigate , Link } from "react-router-dom";
@@ -14,6 +14,13 @@ import "../App.css";
 function Home() {
   const navigate = useNavigate();
 const [message, setMessage] = useState("");
+const [searchQuery, setSearchQuery] = useState("");
+const [locationFilter, setLocationFilter] = useState("");
+const [minSalary, setMinSalary] = useState("");
+const [appliedSearch, setAppliedSearch] = useState("");
+const [appliedLocation, setAppliedLocation] = useState("");
+const [appliedMinSalary, setAppliedMinSalary] = useState("");
+const [sortBy, setSortBy] = useState("newest");
 const {
   jobs,
   showJobForm,
@@ -39,6 +46,54 @@ const {
   startEditJob,
   createJob,
 } = useJobs();
+useEffect(() => {
+  loadJobs(setMessage);
+}, []);
+
+
+console.log("ALL JOBS:", jobs);
+  console.log("TOTAL JOBS:", jobs.length);
+console.log("APPLIED SEARCH:", appliedSearch);
+const filteredJobs = jobs.filter((job) => {
+ const query = appliedSearch.trim().toLowerCase();
+const location = appliedLocation.trim().toLowerCase();
+const salaryMinimum = Number(appliedMinSalary) || 0;
+  const matchesSearch =
+    (job.title || "").toLowerCase().includes(query) ||
+    (job.company || "").toLowerCase().includes(query);
+
+  const matchesLocation = (job.location || "")
+    .toLowerCase()
+    .includes(location);
+
+  const salaryMatch = (job.salary || "").match(/[\d,]+/);
+  const salary = salaryMatch
+    ? Number(salaryMatch[0].replace(/,/g, ""))
+    : 0;
+
+  const matchesSalary =
+    salaryMinimum === 0 || salary >= salaryMinimum;
+
+  return matchesSearch && matchesLocation && matchesSalary;
+});
+console.log("FILTERED JOBS:", filteredJobs);
+const sortedJobs = [...filteredJobs].sort((a, b) => {
+  const getSalary = (job) => {
+    const match = (job.salary || "").match(/[\d,]+/);
+    return match ? Number(match[0].replace(/,/g, "")) : 0;
+  };
+
+  if (sortBy === "salaryHigh") {
+    return getSalary(b) - getSalary(a);
+  }
+
+  if (sortBy === "salaryLow") {
+    return getSalary(a) - getSalary(b);
+  }
+
+  return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+});
+
 
 const {
   mode,
@@ -82,10 +137,90 @@ const {
   return (
     <main className="app">
       <div className="card">
-        <h1>Job Portal</h1>
-        <p className="subtitle">Find your next opportunity</p>
+      <h1>Find Your Dream Job</h1>
+    
+     <p className="subtitle">
+  Discover opportunities that match your skills and ambitions.
+     </p>
+    
 
-        {!user ? (
+<div className="search-bar">
+  <input
+    type="text"
+    value={searchQuery}
+    onChange={(event) => setSearchQuery(event.target.value)}
+    placeholder="Search by job title or company..."
+    aria-label="Search jobs by title or company"
+  />
+
+  <input
+    type="text"
+    value={locationFilter}
+    onChange={(event) => setLocationFilter(event.target.value)}
+    placeholder="Filter by city..."
+    aria-label="Filter jobs by city"
+  />
+
+
+<input
+  type="number"
+  min="0"
+  value={minSalary}
+  onChange={(event) => setMinSalary(event.target.value)}
+  placeholder="Minimum salary (PLN)"
+  aria-label="Minimum salary in PLN"
+/>
+
+  <button
+    type="button"
+    className="search-button"
+    onClick={() => {
+       console.log("SEARCH BUTTON CLICKED");
+  console.log("Search:", searchQuery);
+  console.log("Location:", locationFilter);
+  console.log("Salary:", minSalary);
+      setAppliedSearch(searchQuery);
+      setAppliedLocation(locationFilter);
+      setAppliedMinSalary(minSalary);
+    }}
+  >
+    <span aria-hidden="true">⌕</span>
+    Search Jobs
+  </button>
+
+</div>
+
+<div className="sort-control">
+  <label htmlFor="job-sort">Sort by:</label>
+  <select
+    id="job-sort"
+    value={sortBy}
+    onChange={(event) => setSortBy(event.target.value)}
+  >
+    <option value="newest">Newest first</option>
+    <option value="salaryHigh">Highest salary</option>
+    <option value="salaryLow">Lowest salary</option>
+  </select>
+
+<button
+  type="button"
+  onClick={() => {
+    setSearchQuery("");
+    setLocationFilter("");
+    setMinSalary("");
+    setAppliedSearch("");
+    setAppliedLocation("");
+    setAppliedMinSalary("");
+    setSortBy("newest");
+  }}
+>
+  Clear filters
+</button>
+
+
+</div>
+
+      {!user ? (
           <>
             <div className="tabs">
               <button
@@ -201,7 +336,7 @@ saveProfile={async (overrides) => {
 )}
 
           <JobList
-  jobs={jobs}
+  jobs={sortedJobs}
   user={user}
   onSelectJob={(jobId) => navigate(`/jobs/${jobId}`)}
   onEditJob={startEditJob}
@@ -211,8 +346,10 @@ saveProfile={async (overrides) => {
         )}
         {message && <p className="message">{message}</p>}
 {authMessage && <p className="message">{authMessage}</p>}
+      
       </div>
-    </main>
+   
+   </main>
   );
 }
 

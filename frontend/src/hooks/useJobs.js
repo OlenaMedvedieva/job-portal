@@ -20,11 +20,13 @@ function useJobs() {
   const [jobDescription, setJobDescription] = useState("");
 
   const loadJobs = async (setMessage) => {
-    try {
-      const jobs = await getJobs();
+   console.log("LOAD JOBS FUNCTION CALLED");
+ try {
+     const jobs = await getJobs();
+ console.log("JOBS RECEIVED FROM API:", jobs);
 
-      setJobs(jobs);
-      setMessage("Jobs loaded successfully");
+setJobs(jobs);
+setMessage("Jobs loaded successfully");
     } catch (error) {
       console.error(error);
       setMessage(error.message || "Cannot connect to the server");
