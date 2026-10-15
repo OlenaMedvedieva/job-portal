@@ -126,6 +126,7 @@ return (
 
 </div>
 <div className="profile-photo-field">
+  
  <input
     type="file"
     accept="image/*"

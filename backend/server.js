@@ -448,6 +448,13 @@ app.get("/profile", authenticateToken, async (req, res) => {
 
 app.put("/profile", authenticateToken, async (req, res) => {
   console.log("PROFILE UPDATE ROUTE HIT");
+  console.log("PROFILE FIELDS RECEIVED:", {
+  jobTitle: req.body.jobTitle,
+  city: req.body.city,
+  skills: req.body.skills,
+  experience: req.body.experience,
+  education: req.body.education,
+});
   try {
      const {
       jobTitle,
@@ -758,7 +765,12 @@ app.get("/jobs/:id/applications", authenticateToken, async (req, res) => {
         applications.created_at,
         users.name,
         users.email,
-        users.job_title
+        users.job_title,
+        users.profile_image,
+        users.skills,
+        users.experience,
+        users.education,
+        users.city
        FROM applications
        JOIN users ON applications.user_id = users.id
        JOIN jobs ON applications.job_id = jobs.id

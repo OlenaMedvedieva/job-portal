@@ -370,3 +370,12 @@ button:focus-visible {
   padding: 0;
   flex: 0 0 42px;
 }
+.application-profile-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  margin-bottom: 12px;
+  border: 2px solid #e0e0e0;
+}

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { updateApplicationStatus } from "../api/jobsApi";
-const API_URL = "http://localhost:3000";
-
+const API_URL = "http://172.23.47.70:3000";
 function Applications({ jobId }) {
   const [applications, setApplications] = useState([]);
   const [message, setMessage] = useState("");
@@ -56,6 +55,7 @@ const handleStatusChange = async (applicationId, status) => {
         }
 
         setApplications(data.applications);
+        console.log("APPLICATIONS DATA:", data.applications);
       } catch (error) {
         console.error(error);
         setMessage("Cannot connect to the server");
@@ -76,10 +76,42 @@ const handleStatusChange = async (applicationId, status) => {
       )}
 
       {applications.map((application) => (
-        <div key={application.id} className="application-card">
-          <p>
-            <strong>Name:</strong> {application.name}
-          </p>
+       <div key={application.id} className="application-card">
+  {application.profile_image && (
+    <img
+      src={application.profile_image}
+      alt={`${application.name}'s profile`}
+      className="application-profile-image"
+    />
+  )}
+
+  <p>
+    <strong>Name:</strong> {application.name}
+  </p>
+  <button
+  type="button"
+  onClick={() =>
+    setApplications((prev) =>
+      prev.map((item) =>
+        item.id === application.id
+          ? { ...item, showProfile: !item.showProfile }
+          : item
+      )
+    )
+  }
+>
+  {application.showProfile ? "Hide Profile" : "View Profile"}
+</button>
+
+{application.showProfile && (
+  <div className="candidate-details">
+    <p><strong>Job title:</strong> {application.job_title || "Not specified"}</p>
+    <p><strong>City:</strong> {application.city || "Not specified"}</p>
+    <p><strong>Skills:</strong> {application.skills || "Not specified"}</p>
+    <p><strong>Experience:</strong> {application.experience || "Not specified"}</p>
+    <p><strong>Education:</strong> {application.education || "Not specified"}</p>
+  </div>
+)}
 
           <p>
             <strong>Email:</strong> {application.email}
