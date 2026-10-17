@@ -8,6 +8,7 @@ import JobList from "../components/JobList.jsx";
 import JobForm from "../components/JobForm.jsx";
 import Profile from "../components/Profile.jsx";
 import JobSeekerProfile from "../components/JobSeekerProfile.jsx";
+import {searchCities} from "../api/jobsApi.js";
 import "../App.css";
 
 
@@ -16,6 +17,8 @@ function Home() {
 const [message, setMessage] = useState("");
 const [searchQuery, setSearchQuery] = useState("");
 const [locationFilter, setLocationFilter] = useState("");
+const [citySuggestions, setCitySuggestions] = useState([]);
+const [citiesLoading, setCitiesLoading] = useState(false);
 const [minSalary, setMinSalary] = useState("");
 const [appliedSearch, setAppliedSearch] = useState("");
 const [appliedLocation, setAppliedLocation] = useState("");
@@ -49,15 +52,55 @@ const {
 useEffect(() => {
   loadJobs(setMessage);
 }, []);
+useEffect(() => {
+  const query = locationFilter.trim();
 
+  if (query.length < 2) {
+    setCitySuggestions([]);
+    setCitiesLoading(false);
+    return;
+  }
+
+  let cancelled = false;
+
+  const timer = setTimeout(async () => {
+    setCitiesLoading(true);
+
+    try {
+      const cities = await searchCities(query);
+
+      if (!cancelled) {
+        setCitySuggestions(Array.isArray(cities) ? cities : []);
+      }
+    } catch (error) {
+      if (!cancelled) {
+        console.error("CITY SEARCH ERROR:", error);
+        setCitySuggestions([]);
+      }
+    } finally {
+      if (!cancelled) {
+        setCitiesLoading(false);
+      }
+    }
+  }, 300);
+
+  return () => {
+    cancelled = true;
+    clearTimeout(timer);
+  };
+}, [locationFilter]);
 
 console.log("ALL JOBS:", jobs);
   console.log("TOTAL JOBS:", jobs.length);
 console.log("APPLIED SEARCH:", appliedSearch);
 const filteredJobs = jobs.filter((job) => {
  const query = appliedSearch.trim().toLowerCase();
-const location = appliedLocation.trim().toLowerCase();
-const salaryMinimum = Number(appliedMinSalary) || 0;
+const location = appliedLocation
+  .trim()
+  .split(",")[0]
+  .trim()
+  .toLowerCase();
+ const salaryMinimum = Number(appliedMinSalary) || 0;
   const matchesSearch =
     (job.title || "").toLowerCase().includes(query) ||
     (job.company || "").toLowerCase().includes(query);
@@ -153,14 +196,60 @@ const {
     aria-label="Search jobs by title or company"
   />
 
+  <div className="city-filter-wrapper">
   <input
     type="text"
     value={locationFilter}
     onChange={(event) => setLocationFilter(event.target.value)}
     placeholder="Filter by city..."
     aria-label="Filter jobs by city"
+    autoComplete="off"
+    aria-autocomplete="list"
   />
 
+  {locationFilter.trim().length >= 2 &&
+    (citiesLoading || citySuggestions.length > 0) && (
+      <div className="city-suggestions" role="listbox">
+        {citiesLoading ? (
+          <div className="city-suggestion-status">
+            Searching cities...
+          </div>
+        ) : (
+          citySuggestions.map((city) => {
+            const countryName = city.countryCode
+              ? new Intl.DisplayNames(["en"], {
+                  type: "region",
+                }).of(city.countryCode)
+              : "";
+
+            return (
+              <button
+                type="button"
+                role="option"
+                key={`${city.name}-${city.countryCode}-${city.latitude}`}
+                className="city-suggestion"
+                onClick={() => {
+                  const selectedCity = countryName
+                    ? `${city.name}, ${countryName}`
+                    : city.name;
+
+                  setLocationFilter(selectedCity);
+                  setCitySuggestions([]);
+                }}
+              >
+                <span>{city.name}</span>
+                {countryName && (
+                  <span className="city-suggestion-country">
+                    {countryName}
+                  </span>
+                )}
+              </button>
+            );
+          })
+        )}
+      </div>
+    )}
+</div>
 
 <input
   type="number"

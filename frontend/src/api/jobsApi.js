@@ -215,6 +215,28 @@ export const resendVerificationEmail = async (email) => {
       data.message || "Failed to resend verification email"
     );
   }
-
-  return data;
+ return data;
 };
+  export const searchCities = async (query) => {
+  const text = query.trim();
+
+  if (text.length < 2) {
+    return [];
+  }
+
+  const response = await fetch(
+    `https://countries.dev/cities?q=${encodeURIComponent(text)}&limit=8`
+  );
+
+  if (response.status === 404) {
+    return [];
+  }
+
+  if (!response.ok) {
+    throw new Error("Failed to search cities");
+  }
+
+  return await response.json();
+};
+
+ 
