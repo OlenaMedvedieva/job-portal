@@ -7,6 +7,9 @@ function JobList({
   onSelectJob,
   onEditJob,
   onDeleteJob,
+  isJobSaved,
+  onToggleSaved,
+   emptyMessage = "No jobs match your search. Try changing your filters.",
 }) {
   return (
     <section className="jobs">
@@ -21,7 +24,7 @@ function JobList({
 
       {jobs.length === 0 ? (
         <p className="no-jobs">
-          No jobs match your search. Try changing your filters.
+          {emptyMessage}
         </p>
       ) : (
         jobs.map((job) => (
@@ -32,6 +35,8 @@ function JobList({
             onSelectJob={onSelectJob}
             onEditJob={onEditJob}
             onDeleteJob={onDeleteJob}
+            isSaved={isJobSaved?.(job.id) || false}
+            onToggleSaved={onToggleSaved}
           />
         ))
       )}

@@ -15,10 +15,31 @@ import "../App.css";
 function Home() {
   const navigate = useNavigate();
 const [message, setMessage] = useState("");
+const [activeSection, setActiveSection] = useState("jobs");
+const [savedJobsByUser, setSavedJobsByUser] = useState(() => {
+  try {
+    const saved = localStorage.getItem("savedJobsByUser");
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+});
+useEffect(() => {
+  try {
+    localStorage.setItem(
+      "savedJobsByUser",
+      JSON.stringify(savedJobsByUser)
+    );
+  } catch (error) {
+    console.error("Could not save favorite jobs:", error);
+  }
+}, [savedJobsByUser]);
+
 const [searchQuery, setSearchQuery] = useState("");
 const [locationFilter, setLocationFilter] = useState("");
 const [citySuggestions, setCitySuggestions] = useState([]);
 const [citiesLoading, setCitiesLoading] = useState(false);
+const [citySearchDone, setCitySearchDone] = useState(false);
 const [minSalary, setMinSalary] = useState("");
 const [appliedSearch, setAppliedSearch] = useState("");
 const [appliedLocation, setAppliedLocation] = useState("");
@@ -58,6 +79,7 @@ useEffect(() => {
   if (query.length < 2) {
     setCitySuggestions([]);
     setCitiesLoading(false);
+    setCitySearchDone(false);
     return;
   }
 
@@ -65,17 +87,21 @@ useEffect(() => {
 
   const timer = setTimeout(async () => {
     setCitiesLoading(true);
+    setCitySearchDone(false);
 
     try {
       const cities = await searchCities(query);
 
       if (!cancelled) {
-        setCitySuggestions(Array.isArray(cities) ? cities : []);
+        const results = Array.isArray(cities) ? cities : [];
+        setCitySuggestions(results);
+        setCitySearchDone(true);
       }
     } catch (error) {
       if (!cancelled) {
         console.error("CITY SEARCH ERROR:", error);
         setCitySuggestions([]);
+        setCitySearchDone(false);
       }
     } finally {
       if (!cancelled) {
@@ -175,17 +201,107 @@ const {
   logout,
 } = useAuth();
 
- 
+ const currentUserKey = user?.id ? String(user.id) : null;
+
+const savedJobIds = currentUserKey
+  ? savedJobsByUser[currentUserKey] || []
+  : [];
+
+const isJobSaved = (jobId) =>
+  savedJobIds.includes(String(jobId));
+
+const toggleSavedJob = (jobId) => {
+  if (!currentUserKey) return;
+
+  setSavedJobsByUser((previous) => {
+    const currentIds = previous[currentUserKey] || [];
+    const id = String(jobId);
+
+    const nextIds = currentIds.includes(id)
+      ? currentIds.filter((savedId) => savedId !== id)
+      : [...currentIds, id];
+
+    return {
+      ...previous,
+      [currentUserKey]: nextIds,
+    };
+  });
+};
 
   return (
-    <main className="app">
-      <div className="card">
-      <h1>Find Your Dream Job</h1>
-    
-     <p className="subtitle">
-  Discover opportunities that match your skills and ambitions.
-     </p>
-    
+   <main className="app">
+  
+  <div className={user ? "dashboard-layout" : "auth-layout"}>
+    {user && (
+      <aside className="sidebar">
+        <div className="sidebar-brand">
+          <span className="brand-icon">J</span>
+          <span>Job Portal</span>
+        </div>
+
+        <nav className="sidebar-nav" aria-label="Main navigation">
+          <button
+            type="button"
+            className={`sidebar-link ${
+              activeSection === "profile" ? "active" : ""
+            }`}
+            onClick={() => setActiveSection("profile")}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21a8 8 0 0 1 16 0" />
+            </svg>
+            <span>My Page</span>
+          </button>
+
+          <button
+            type="button"
+            className={`sidebar-link ${
+              activeSection === "jobs" ? "active" : ""
+            }`}
+            onClick={() => setActiveSection("jobs")}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m16 16 5 5" />
+            </svg>
+            <span>Find Jobs</span>
+          </button>
+
+          <button
+            type="button"
+            className={`sidebar-link ${
+              activeSection === "saved" ? "active" : ""
+            }`}
+            onClick={() => setActiveSection("saved")}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 3h12v18l-6-4-6 4z" />
+            </svg>
+            <span>Saved</span>
+          </button>
+        </nav>
+      </aside>
+    )}
+
+    <div className="card">
+      <h1>
+        {activeSection === "profile"
+          ? "My Page"
+          : activeSection === "saved"
+            ? "Saved Jobs"
+            : "Find Your Dream Job"}
+      </h1>
+
+      <p className="subtitle">
+        {activeSection === "profile"
+          ? "Your professional profile and applications."
+          : activeSection === "saved"
+            ? "Your saved job opportunities."
+            : "Discover opportunities that match your skills and ambitions."}
+      </p>
+  {user && activeSection === "jobs" && (
+  < >  
 
 <div className="search-bar">
   <input
@@ -208,14 +324,20 @@ const {
   />
 
   {locationFilter.trim().length >= 2 &&
-    (citiesLoading || citySuggestions.length > 0) && (
+    (citiesLoading ||
+  citySuggestions.length > 0 ||
+  citySearchDone) && (
       <div className="city-suggestions" role="listbox">
         {citiesLoading ? (
           <div className="city-suggestion-status">
             Searching cities...
           </div>
-        ) : (
-          citySuggestions.map((city) => {
+        ) : citySuggestions.length === 0 ? (
+  <div className="city-suggestion-status">
+    No cities found
+  </div>
+               ) : (
+            citySuggestions.map((city) => {
             const countryName = city.countryCode
               ? new Intl.DisplayNames(["en"], {
                   type: "region",
@@ -308,7 +430,8 @@ const {
 
 
 </div>
-
+  </>
+)}
       {!user ? (
           <>
             <div className="tabs">
@@ -361,6 +484,9 @@ const {
         ) : (
           <>
 
+
+{activeSection === "profile" && (
+
 <Profile
   jobSeekerJobTitle={jobSeekerJobTitle}
   setJobSeekerJobTitle={setJobSeekerJobTitle}
@@ -404,7 +530,9 @@ saveProfile={async (overrides) => {
   setJobDescription={setJobDescription}
   logout={logout}
 />
-
+)}
+{activeSection === "jobs" && (
+  <>
 {showJobForm && user.role === "employer" && (
   <JobForm
     editingJobId={editingJobId}
@@ -430,14 +558,33 @@ saveProfile={async (overrides) => {
   onSelectJob={(jobId) => navigate(`/jobs/${jobId}`)}
   onEditJob={startEditJob}
   onDeleteJob={(jobId) => deleteJob(jobId, setMessage)}
+  isJobSaved={isJobSaved}
+  onToggleSaved={toggleSavedJob}
+  emptyMessage="You haven’t saved any jobs yet."
 />
+  </>
+)}
+{activeSection === "saved" && (
+  <JobList
+    jobs={jobs.filter((job) =>
+      savedJobIds.includes(String(job.id))
+    )}
+    user={user}
+    onSelectJob={(jobId) => navigate(`/jobs/${jobId}`)}
+    onEditJob={startEditJob}
+    onDeleteJob={(jobId) => deleteJob(jobId, setMessage)}
+    isJobSaved={isJobSaved}
+    onToggleSaved={toggleSavedJob}
+    emptyMessage="You haven’t saved any jobs yet."
+  />
+)}
           </>
         )}
         {message && <p className="message">{message}</p>}
 {authMessage && <p className="message">{authMessage}</p>}
       
       </div>
-   
+   </div>
    </main>
   );
 }

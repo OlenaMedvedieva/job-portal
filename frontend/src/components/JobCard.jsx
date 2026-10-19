@@ -1,19 +1,37 @@
 import { useState } from "react";
 import Applications from "./Applications.jsx";
 
-
 function JobCard({
   job,
   user,
   onSelectJob,
   onEditJob,
   onDeleteJob,
+  isSaved = false,
+  onToggleSaved,
 }) {
   const [showApplications, setShowApplications] = useState(false);
   
   return (
     <article className="job-card">
-      <h3>{job.title}</h3>
+     <div className="job-card-heading">
+  <h3>{job.title}</h3>
+
+  {user && (
+    <button
+      type="button"
+      className={`bookmark-button ${isSaved ? "saved" : ""}`}
+      onClick={() => onToggleSaved?.(job.id)}
+      aria-label={isSaved ? "Remove from saved jobs" : "Save job"}
+      aria-pressed={isSaved}
+      title={isSaved ? "Remove from Saved" : "Save job"}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 3.75h12v16.5l-6-4-6 4z" />
+      </svg>
+    </button>
+  )}
+</div>
 
       <p>
         <strong>Company:</strong> {job.company}
