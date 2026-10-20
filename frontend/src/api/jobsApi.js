@@ -199,6 +199,94 @@ export const getJobSeekers = async (token) => {
   return data.jobSeekers;
 };
 
+export const sendJobInvitation = async (
+  jobId,
+  candidateId,
+  token
+) => {
+  const response = await fetch(`${API_URL}/job-invitations`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      jobId,
+      candidateId,
+    }),
+  });
+
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to send invitation");
+  }
+
+  return data;
+};
+export const getMyJobInvitations = async (token) => {
+  const response = await fetch(`${API_URL}/job-invitations/my`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to load invitations");
+  }
+
+  return data.invitations;
+};
+
+export const respondToJobInvitation = async (
+  invitationId,
+  status,
+  token
+) => {
+  const response = await fetch(
+    `${API_URL}/job-invitations/${invitationId}/respond`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to respond to invitation");
+  }
+
+  return data;
+};
+export const getSentJobInvitations = async (token) => {
+  const response = await fetch(
+    `${API_URL}/job-invitations/sent`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Failed to load sent invitations"
+    );
+  }
+
+  return data.invitations;
+};
+
 export const resendVerificationEmail = async (email) => {
   const response = await fetch(`${API_URL}/resend-verification`, {
     method: "POST",

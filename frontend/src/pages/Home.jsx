@@ -8,7 +8,10 @@ import JobList from "../components/JobList.jsx";
 import JobForm from "../components/JobForm.jsx";
 import Profile from "../components/Profile.jsx";
 import JobSeekerProfile from "../components/JobSeekerProfile.jsx";
-import {searchCities} from "../api/jobsApi.js";
+import JobSeekers from "../components/JobSeekers.jsx";
+import MyInvitations from "../components/MyInvitations.jsx";
+import EmployerInvitations from "../components/EmployerInvitations.jsx";
+import {searchCities , sendJobInvitation } from "../api/jobsApi.js";
 import "../App.css";
 
 
@@ -163,7 +166,6 @@ const sortedJobs = [...filteredJobs].sort((a, b) => {
   return new Date(b.created_at || 0) - new Date(a.created_at || 0);
 });
 
-
 const {
   mode,
   setMode,
@@ -227,6 +229,26 @@ const toggleSavedJob = (jobId) => {
     };
   });
 };
+const handleInviteCandidate = async (jobId, candidateId) => {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    setMessage("Please log in again.");
+    return;
+  }
+
+  try {
+    const result = await sendJobInvitation(
+      jobId,
+      candidateId,
+      token
+    );
+
+    setMessage(result.message || "Invitation sent successfully.");
+  } catch (error) {
+    setMessage(error.message || "Failed to send invitation.");
+  }
+};
 
   return (
    <main className="app">
@@ -239,68 +261,144 @@ const toggleSavedJob = (jobId) => {
           <span>Job Portal</span>
         </div>
 
-        <nav className="sidebar-nav" aria-label="Main navigation">
-          <button
-            type="button"
-            className={`sidebar-link ${
-              activeSection === "profile" ? "active" : ""
-            }`}
-            onClick={() => setActiveSection("profile")}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21a8 8 0 0 1 16 0" />
-            </svg>
-            <span>My Page</span>
-          </button>
+       <nav className="sidebar-nav" aria-label="Main navigation">
+  <button
+    type="button"
+    className={`sidebar-link ${
+      activeSection === "profile" ? "active" : ""
+    }`}
+    onClick={() => setActiveSection("profile")}
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </svg>
+    <span>My Page</span>
+  </button>
 
-          <button
-            type="button"
-            className={`sidebar-link ${
-              activeSection === "jobs" ? "active" : ""
-            }`}
-            onClick={() => setActiveSection("jobs")}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m16 16 5 5" />
-            </svg>
-            <span>Find Jobs</span>
-          </button>
+  {user.role === "employer" ? (
+    <>
+      <button
+        type="button"
+        className={`sidebar-link ${
+          activeSection === "jobs" ? "active" : ""
+        }`}
+        onClick={() => setActiveSection("jobs")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="7" width="18" height="14" rx="2" />
+          <path d="M8 7V4h8v3M3 12h18M10 12v2h4v-2" />
+        </svg>
+        <span>My Jobs</span>
+      </button>
 
-          <button
-            type="button"
-            className={`sidebar-link ${
-              activeSection === "saved" ? "active" : ""
-            }`}
-            onClick={() => setActiveSection("saved")}
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 3h12v18l-6-4-6 4z" />
-            </svg>
-            <span>Saved</span>
-          </button>
-        </nav>
+      <button
+        type="button"
+        className={`sidebar-link ${
+          activeSection === "candidates" ? "active" : ""
+        }`}
+        onClick={() => setActiveSection("candidates")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2" />
+        </svg>
+        <span>Find Candidates</span>
+      </button>
+
+      <button
+        type="button"
+        className={`sidebar-link ${
+          activeSection === "applications" ? "active" : ""
+        }`}
+        onClick={() => setActiveSection("applications")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 3h10l3 3v15H4V3zM8 11h8M8 15h8M8 7h4" />
+        </svg>
+        <span>Applications</span>
+      </button>
+    </>
+  ) : (
+    <>
+      <button
+        type="button"
+        className={`sidebar-link ${
+          activeSection === "jobs" ? "active" : ""
+        }`}
+        onClick={() => setActiveSection("jobs")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m16 16 5 5" />
+        </svg>
+        <span>Find Jobs</span>
+      </button>
+
+      <button
+        type="button"
+        className={`sidebar-link ${
+          activeSection === "saved" ? "active" : ""
+        }`}
+        onClick={() => setActiveSection("saved")}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 3h12v18l-6-4-6 4z" />
+        </svg>
+        <span>Saved</span>
+      </button>
+      <button
+  type="button"
+  className={`sidebar-link ${
+    activeSection === "invitations" ? "active" : ""
+  }`}
+  onClick={() => setActiveSection("invitations")}
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M4 5h16v14H4z" />
+    <path d="m4 7 8 6 8-6" />
+  </svg>
+  <span>My Invitations</span>
+</button>
+    </>
+  )}
+</nav>
       </aside>
     )}
 
     <div className="card">
-      <h1>
-        {activeSection === "profile"
-          ? "My Page"
-          : activeSection === "saved"
-            ? "Saved Jobs"
-            : "Find Your Dream Job"}
-      </h1>
-
+ <h1>
+  {activeSection === "profile"
+    ? "My Page"
+    : activeSection === "saved"
+      ? "Saved Jobs"
+      : activeSection === "candidates"
+        ? "Find Candidates"
+        : activeSection === "applications"
+          ? "Applications"
+          : activeSection === "invitations"
+            ? "My Invitations"
+            : user?.role === "employer"
+              ? "My Jobs"
+              : "Find Your Dream Job"}
+  </h1>
       <p className="subtitle">
-        {activeSection === "profile"
-          ? "Your professional profile and applications."
-          : activeSection === "saved"
-            ? "Your saved job opportunities."
-            : "Discover opportunities that match your skills and ambitions."}
-      </p>
-  {user && activeSection === "jobs" && (
+  {activeSection === "profile"
+    ? "Your professional profile and applications."
+    : activeSection === "saved"
+      ? "Your saved job opportunities."
+      : activeSection === "candidates"
+        ? "Discover candidates for your company."
+        : activeSection === "applications"
+          ? "Manage applications for your vacancies."
+          : activeSection === "invitations"
+            ? "Review and respond to invitations from employers."
+            : user?.role === "employer"
+              ? "Manage your posted vacancies."
+              : "Discover opportunities that match your skills and ambitions."}
+       </p>
+
+      {user && user.role !== "employer" && activeSection === "jobs" && (
   < >  
 
 <div className="search-bar">
@@ -553,7 +651,13 @@ saveProfile={async (overrides) => {
 )}
 
           <JobList
-  jobs={sortedJobs}
+  jobs={
+  user?.role === "employer"
+    ? jobs.filter(
+        (job) => String(job.user_id) === String(user.id)
+      )
+    : sortedJobs
+}
   user={user}
   onSelectJob={(jobId) => navigate(`/jobs/${jobId}`)}
   onEditJob={startEditJob}
@@ -577,6 +681,22 @@ saveProfile={async (overrides) => {
     onToggleSaved={toggleSavedJob}
     emptyMessage="You haven’t saved any jobs yet."
   />
+)}
+{activeSection === "candidates" && user?.role === "employer" && (
+  <JobSeekers
+    jobSeekers={jobSeekers}
+    loadJobSeekers={loadJobSeekers}
+    jobs={jobs.filter(
+      (job) => String(job.user_id) === String(user.id)
+    )}
+    onInviteCandidate={handleInviteCandidate}
+  />
+)}
+{activeSection === "invitations" && user?.role === "job_seeker" && (
+  <MyInvitations />
+)}
+{activeSection === "applications" && user?.role === "employer" && (
+  <EmployerInvitations />
 )}
           </>
         )}

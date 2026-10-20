@@ -138,7 +138,26 @@ pool.query(`
 }).catch((error) => {
   console.error("Applications table error:", error);
 });
-
+pool.query(`
+  CREATE TABLE IF NOT EXISTS job_invitations (
+    id SERIAL PRIMARY KEY,
+    job_id INTEGER NOT NULL
+      REFERENCES jobs(id) ON DELETE CASCADE,
+    candidate_id INTEGER NOT NULL
+      REFERENCES users(id) ON DELETE CASCADE,
+    employer_id INTEGER NOT NULL
+      REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending'
+      CHECK (status IN ('pending', 'accepted', 'declined')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    responded_at TIMESTAMP,
+    UNIQUE(job_id, candidate_id)
+  )
+`).then(() => {
+  console.log("Job invitations table is ready");
+}).catch((error) => {
+  console.error("Job invitations table error:", error);
+});
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
@@ -510,7 +529,6 @@ app.get("/job-seekers", authenticateToken, async (req, res) => {
         message: "Only employers can view job seekers",
       });
     }
-console.log("PHOTO RECEIVED BY SERVER:", profileImage ? profileImage.substring(0, 80) : "EMPTY");
     const result = await pool.query(
       `SELECT
         id,
@@ -539,6 +557,242 @@ console.log("PHOTO RECEIVED BY SERVER:", profileImage ? profileImage.substring(0
     });
   }
 });
+app.post("/job-invitations", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "employer") {
+      return res.status(403).json({
+        message: "Only employers can invite candidates",
+      });
+    }
+
+    const jobId = Number(req.body.jobId);
+    const candidateId = Number(req.body.candidateId);
+    const employerId = req.user.id;
+
+    if (
+      !Number.isInteger(jobId) ||
+      jobId <= 0 ||
+      !Number.isInteger(candidateId) ||
+      candidateId <= 0
+    ) {
+      return res.status(400).json({
+        message: "Valid job and candidate IDs are required",
+      });
+    }
+
+    const jobResult = await pool.query(
+      `SELECT id
+       FROM jobs
+       WHERE id = $1 AND user_id = $2`,
+      [jobId, employerId]
+    );
+
+    if (jobResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Job not found or you do not own this job",
+      });
+    }
+
+    const candidateResult = await pool.query(
+      `SELECT id
+       FROM users
+       WHERE id = $1 AND role = 'job_seeker'`,
+      [candidateId]
+    );
+
+    if (candidateResult.rows.length === 0) {
+      return res.status(404).json({
+        message: "Candidate not found",
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO job_invitations
+         (job_id, candidate_id, employer_id)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (job_id, candidate_id)
+       DO UPDATE SET
+         status = 'pending',
+         employer_id = EXCLUDED.employer_id,
+         created_at = CURRENT_TIMESTAMP,
+         responded_at = NULL
+       WHERE job_invitations.status = 'declined'
+       RETURNING id, job_id, candidate_id, employer_id,
+                 status, created_at`,
+      [jobId, candidateId, employerId]
+    );
+
+    if (result.rows.length === 0) {
+      const existingResult = await pool.query(
+        `SELECT status
+         FROM job_invitations
+         WHERE job_id = $1 AND candidate_id = $2`,
+        [jobId, candidateId]
+      );
+
+      const status = existingResult.rows[0]?.status;
+
+      return res.status(409).json({
+        message:
+          status === "accepted"
+            ? "This candidate has already accepted the invitation."
+            : "An invitation for this job has already been sent.",
+      });
+    }
+
+    return res.status(201).json({
+      message: "Invitation sent successfully",
+      invitation: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Create job invitation error:", error);
+
+    return res.status(500).json({
+      message: "Failed to send invitation",
+    });
+  }
+});
+app.get("/job-invitations/my", authenticateToken, async (req, res) => {
+  try {
+    if (req.user.role !== "job_seeker") {
+      return res.status(403).json({
+        message: "Only job seekers can view their invitations",
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT
+         ji.id,
+         ji.job_id,
+         ji.status,
+         ji.created_at,
+         ji.responded_at,
+         j.title AS job_title,
+         j.company,
+         j.location,
+         j.salary,
+         employer.name AS employer_name
+       FROM job_invitations ji
+       JOIN jobs j ON j.id = ji.job_id
+       JOIN users employer ON employer.id = ji.employer_id
+       WHERE ji.candidate_id = $1
+       ORDER BY ji.created_at DESC`,
+      [req.user.id]
+    );
+
+    return res.json({
+      invitations: result.rows,
+    });
+  } catch (error) {
+    console.error("Load job invitations error:", error);
+
+    return res.status(500).json({
+      message: "Failed to load invitations",
+    });
+  }
+});
+app.patch(
+  "/job-invitations/:id/respond",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "job_seeker") {
+        return res.status(403).json({
+          message: "Only job seekers can respond to invitations",
+        });
+      }
+
+      const invitationId = Number(req.params.id);
+      const { status } = req.body;
+
+      if (
+        !Number.isInteger(invitationId) ||
+        invitationId <= 0 ||
+        !["accepted", "declined"].includes(status)
+      ) {
+        return res.status(400).json({
+          message: "A valid invitation and response are required",
+        });
+      }
+
+      const result = await pool.query(
+        `UPDATE job_invitations
+         SET status = $1,
+             responded_at = CURRENT_TIMESTAMP
+         WHERE id = $2
+           AND candidate_id = $3
+           AND status = 'pending'
+         RETURNING id, job_id, candidate_id, status, responded_at`,
+        [status, invitationId, req.user.id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          message: "Invitation not found or already answered",
+        });
+      }
+
+      return res.json({
+        message:
+          status === "accepted"
+            ? "Invitation accepted"
+            : "Invitation declined",
+        invitation: result.rows[0],
+      });
+    } catch (error) {
+      console.error("Respond to invitation error:", error);
+
+      return res.status(500).json({
+        message: "Failed to respond to invitation",
+      });
+    }
+  }
+);
+app.get(
+  "/job-invitations/sent",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      if (req.user.role !== "employer") {
+        return res.status(403).json({
+          message: "Only employers can view sent invitations",
+        });
+      }
+
+      const result = await pool.query(
+        `SELECT
+           ji.id,
+           ji.job_id,
+           ji.candidate_id,
+           ji.status,
+           ji.created_at,
+           ji.responded_at,
+           j.title AS job_title,
+           j.company,
+           candidate.name AS candidate_name,
+           candidate.job_title AS candidate_job_title,
+           candidate.city AS candidate_city,
+           candidate.skills AS candidate_skills
+         FROM job_invitations ji
+         JOIN jobs j ON j.id = ji.job_id
+         JOIN users candidate ON candidate.id = ji.candidate_id
+         WHERE ji.employer_id = $1
+         ORDER BY ji.created_at DESC`,
+        [req.user.id]
+      );
+
+      return res.json({
+        invitations: result.rows,
+      });
+    } catch (error) {
+      console.error("Load sent invitations error:", error);
+
+      return res.status(500).json({
+        message: "Failed to load sent invitations",
+      });
+    }
+  }
+);
 
 app.post("/jobs", authenticateToken, async (req, res) => {
   try {
