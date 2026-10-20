@@ -98,20 +98,40 @@ try {
   }
 if (mode === "login") {
   localStorage.setItem("token", data.token);
-  setUser(data.user);
-  setJobTitle(data.user.job_title || "");
-  setProfileImage(data.user.profile_image || "");
-  setCity(data.user.city || "");
-  setSkills(data.user.skills || "");
-  setExperience(data.user.experience || "");
-  setEducation(data.user.education || "");
-  setMessage("Login successful!");
 
-  } else {
-    setMessage("Registration successful! You can now log in.");
-    setMode("login");
-    setPassword("");
+  try {
+
+    const profileData = await getProfile(data.token);
+    const profile = profileData.user || profileData;
+    setUser(profile);
+    setJobTitle(profile.job_title || "");
+    setProfileImage(profile.profile_image || "");
+    setCity(profile.city || "");
+    setSkills(profile.skills || "");
+    setExperience(profile.experience || "");
+    setEducation(profile.education || "");
+
+    setMessage("Login successful!");
+  } catch (profileError) {
+    console.error("Load profile after login error:", profileError);
+
+    setUser(data.user);
+    setJobTitle(data.user?.job_title || "");
+    setProfileImage(data.user?.profile_image || "");
+    setCity(data.user?.city || "");
+    setSkills(data.user?.skills || "");
+    setExperience(data.user?.experience || "");
+    setEducation(data.user?.education || "");
+
+    setMessage(
+      "Login successful, but profile data could not be loaded. Please refresh the page."
+    );
   }
+} else {
+  setMessage("Registration successful! You can now log in.");
+  setMode("login");
+  setPassword("");
+}
 } catch (error) {
   console.error(error);
   setMessage("Cannot connect to the server");
