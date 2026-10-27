@@ -769,10 +769,14 @@ app.get(
            ji.responded_at,
            j.title AS job_title,
            j.company,
-           candidate.name AS candidate_name,
-           candidate.job_title AS candidate_job_title,
-           candidate.city AS candidate_city,
-           candidate.skills AS candidate_skills
+            candidate.name AS candidate_name,
+            candidate.email AS candidate_email,
+            candidate.profile_image AS candidate_profile_image,
+            candidate.job_title AS candidate_job_title,
+            candidate.city AS candidate_city,
+            candidate.skills AS candidate_skills,
+            candidate.experience AS candidate_experience,
+            candidate.education AS candidate_education
          FROM job_invitations ji
          JOIN jobs j ON j.id = ji.job_id
          JOIN users candidate ON candidate.id = ji.candidate_id
@@ -843,8 +847,8 @@ app.get("/applications/my", authenticateToken, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-        applications.id,
-        applications.job_id,
+        appplications.id,
+        aplications.job_id,
         applications.status,
         applications.created_at,
         jobs.title,
@@ -963,17 +967,23 @@ app.post("/jobs/:id/apply", authenticateToken, async (req, res) => {
     const userId = req.user.id;
 
     const jobResult = await pool.query(
-      `SELECT id
-       FROM jobs
-       WHERE id = $1`,
-      [jobId]
-    );
+  `SELECT id, user_id
+   FROM jobs
+   WHERE id = $1`,
+  [jobId]
+);
 
     if (jobResult.rows.length === 0) {
       return res.status(404).json({
         message: "Job not found",
       });
     }
+
+    if (String(jobResult.rows[0].user_id) === String(userId)) {
+  return res.status(400).json({
+    message: "You cannot apply for your own job",
+  });
+}
 
     const result = await pool.query(
       `INSERT INTO applications (job_id, user_id, status)

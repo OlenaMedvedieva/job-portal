@@ -297,6 +297,15 @@ code {
 }
 
 @media (max-width: 480px) {
+    .profile-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .profile-header-actions {
+      align-items: flex-start;
+    }
+  }
   .profile-header {
     gap: 8px;
   }
@@ -305,4 +314,34 @@ code {
     padding: 8px 10px;
     font-size: 12px;
   }
+.applications-job-group {
+  margin: 24px 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.applications {
+  display: flex !important;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.applications .application-card {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 18px;
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px;
+  background: transparent;
+  box-shadow: none !important;
 }

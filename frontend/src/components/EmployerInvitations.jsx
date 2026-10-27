@@ -5,7 +5,8 @@ function EmployerInvitations() {
   const [invitations, setInvitations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-
+  const [expandedInvitationId, setExpandedInvitationId] = useState(null);
+  
   useEffect(() => {
     let cancelled = false;
 
@@ -66,38 +67,91 @@ function EmployerInvitations() {
       ) : (
         invitations.map((invitation) => (
           <article className="job-card" key={invitation.id}>
-            <h3>{invitation.candidate_name}</h3>
+  <button
+    type="button"
+    aria-expanded={
+      String(expandedInvitationId) === String(invitation.id)
+    }
+    onClick={() =>
+      setExpandedInvitationId((current) =>
+        String(current) === String(invitation.id)
+          ? null
+          : invitation.id
+      )
+    }
+    style={{
+      background: "transparent",
+      border: "none",
+      padding: "8px 0",
+      cursor: "pointer",
+      fontSize: "1.1rem",
+      fontWeight: 700,
+      textAlign: "left",
+    }}
+  >
+    {invitation.candidate_name}
+    {String(expandedInvitationId) === String(invitation.id)
+      ? " ▲"
+      : " ▼"}
+  </button>
 
-            <p>
-              <strong>Position:</strong>{" "}
-              {invitation.candidate_job_title || "Not specified"}
-            </p>
+  {String(expandedInvitationId) === String(invitation.id) && (
+    <div className="candidate-full-profile">
+      {invitation.candidate_profile_image && (
+        <img
+          src={invitation.candidate_profile_image}
+          alt={invitation.candidate_name}
+          className="job-seeker-photo"
+        />
+      )}
 
-            <p>
-              <strong>City:</strong>{" "}
-              {invitation.candidate_city || "Not specified"}
-            </p>
+      <p>
+        <strong>Email:</strong>{" "}
+        {invitation.candidate_email || "Not specified"}
+      </p>
 
-            <p>
-              <strong>Skills:</strong>{" "}
-              {invitation.candidate_skills || "Not specified"}
-            </p>
+      <p>
+        <strong>Position:</strong>{" "}
+        {invitation.candidate_job_title || "Not specified"}
+      </p>
 
-            <p>
-              <strong>Job offered:</strong>{" "}
-              {invitation.job_title}
-            </p>
+      <p>
+        <strong>City:</strong>{" "}
+        {invitation.candidate_city || "Not specified"}
+      </p>
 
-            <p>
-              <strong>Company:</strong>{" "}
-              {invitation.company || "Not specified"}
-            </p>
+      <p>
+        <strong>Skills:</strong>{" "}
+        {invitation.candidate_skills || "Not specified"}
+      </p>
 
-            <p>
-              <strong>Response:</strong>{" "}
-              {statusLabels[invitation.status] || invitation.status}
-            </p>
-          </article>
+      <p>
+        <strong>Experience:</strong>{" "}
+        {invitation.candidate_experience || "Not specified"}
+      </p>
+
+      <p>
+        <strong>Education:</strong>{" "}
+        {invitation.candidate_education || "Not specified"}
+      </p>
+
+      <p>
+        <strong>Job offered:</strong>{" "}
+        {invitation.job_title}
+      </p>
+
+      <p>
+        <strong>Company:</strong>{" "}
+        {invitation.company || "Not specified"}
+      </p>
+
+      <p>
+        <strong>Response:</strong>{" "}
+        {statusLabels[invitation.status] || invitation.status}
+      </p>
+    </div>
+  )}
+</article>
         ))
       )}
     </section>

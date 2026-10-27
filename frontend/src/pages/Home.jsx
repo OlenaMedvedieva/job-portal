@@ -11,6 +11,7 @@ import JobSeekerProfile from "../components/JobSeekerProfile.jsx";
 import JobSeekers from "../components/JobSeekers.jsx";
 import MyInvitations from "../components/MyInvitations.jsx";
 import EmployerInvitations from "../components/EmployerInvitations.jsx";
+import Applications from "../components/Applications.jsx";
 import {searchCities , sendJobInvitation } from "../api/jobsApi.js";
 import "../App.css";
 
@@ -696,7 +697,26 @@ saveProfile={async (overrides) => {
   <MyInvitations />
 )}
 {activeSection === "applications" && user?.role === "employer" && (
-  <EmployerInvitations />
+  <section className="employer-applications">
+    <h2>Applications</h2>
+    <p>Review candidates who applied for your jobs.</p>
+
+    {jobs.filter(
+      (job) => String(job.user_id) === String(user.id)
+    ).length === 0 ? (
+      <p>No jobs found.</p>
+    ) : (
+      jobs
+        .filter((job) => String(job.user_id) === String(user.id))
+        .map((job) => (
+          <article className="job-card" key={job.id}>
+            <h3>{job.title}</h3>
+            <p>{job.company}</p>
+            <Applications jobId={job.id} />
+          </article>
+        ))
+    )}
+  </section>
 )}
           </>
         )}
