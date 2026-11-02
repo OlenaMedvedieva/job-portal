@@ -257,10 +257,14 @@ const handleInviteCandidate = async (jobId, candidateId) => {
   <div className={user ? "dashboard-layout" : "auth-layout"}>
     {user && (
       <aside className="sidebar">
-        <div className="sidebar-brand">
-          <span className="brand-icon">J</span>
-          <span>Job Portal</span>
-        </div>
+       <Link
+  to="/"
+  className="sidebar-brand"
+  style={{ textDecoration: "none", color: "inherit" }}
+>
+  <span className="brand-icon">J</span>
+  <span>Job Portal</span>
+</Link>
 
        <nav className="sidebar-nav" aria-label="Main navigation">
   <button
@@ -708,13 +712,13 @@ saveProfile={async (overrides) => {
     ) : (
       jobs
         .filter((job) => String(job.user_id) === String(user.id))
-        .map((job) => (
-          <article className="job-card" key={job.id}>
-            <h3>{job.title}</h3>
-            <p>{job.company}</p>
-            <Applications jobId={job.id} />
-          </article>
-        ))
+       .map((job) => (
+  <section className="applications-job-group" key={job.id}>
+    <h3>{job.title}</h3>
+    <p>{job.company}</p>
+    <Applications jobId={job.id} />
+  </section>
+))
     )}
   </section>
 )}

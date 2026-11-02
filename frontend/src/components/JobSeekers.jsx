@@ -8,6 +8,21 @@ function JobSeekers({
 }) {
   const [selectedJobSeeker, setSelectedJobSeeker] = useState(null);
   const [selectedJobIds, setSelectedJobIds] = useState({});
+  const [searchJobTitle, setSearchJobTitle] = useState("");
+const [searchCity, setSearchCity] = useState("");
+const [searchSkills, setSearchSkills] = useState("");
+
+const filteredJobSeekers = jobSeekers.filter((candidate) => {
+  const title = (candidate.job_title || "").toLowerCase();
+  const city = (candidate.city || "").toLowerCase();
+  const skills = (candidate.skills || "").toLowerCase();
+
+  return (
+    title.includes(searchJobTitle.trim().toLowerCase()) &&
+    city.includes(searchCity.trim().toLowerCase()) &&
+    skills.includes(searchSkills.trim().toLowerCase())
+  );
+});
   useEffect(() => {
     loadJobSeekers();
   }, []);

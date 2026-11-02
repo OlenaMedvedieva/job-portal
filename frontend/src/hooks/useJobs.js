@@ -26,7 +26,6 @@ function useJobs() {
  console.log("JOBS RECEIVED FROM API:", jobs);
 
 setJobs(jobs);
-setMessage("Jobs loaded successfully");
     } catch (error) {
       console.error(error);
       setMessage(error.message || "Cannot connect to the server");
