@@ -83,6 +83,10 @@ const handleApply = async () => {
 </p>
 
 <p>
+  <strong>Category:</strong> {job.category || "Not specified"}
+</p>
+
+<p>
   <strong>Location:</strong> {job.location || "Not specified"}
 </p>
 

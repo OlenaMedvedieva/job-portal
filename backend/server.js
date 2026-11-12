@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 const { Pool } = require("pg");
 const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
@@ -20,6 +21,9 @@ transporter.verify((error, success) => {
   }
 });
 
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -106,20 +110,50 @@ pool.query(`
 }).catch((error) => {
   console.error("Users email verification token column error:", error);
 });
+pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS google_id VARCHAR(255)
+`).then(() => {
+  console.log("Users Google ID column is ready");
+}).catch((error) => {
+  console.error("Users Google ID column error:", error);
+});
+
+pool.query(`
+  CREATE UNIQUE INDEX IF NOT EXISTS users_google_id_unique
+  ON users (google_id)
+  WHERE google_id IS NOT NULL
+`).then(() => {
+  console.log("Google ID unique index is ready");
+}).catch((error) => {
+  console.error("Google ID unique index error:", error);
+});
 
 pool.query(`
   CREATE TABLE IF NOT EXISTS jobs (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     company VARCHAR(255) NOT NULL,
+    category VARCHAR(100),
     location VARCHAR(255),
     description TEXT,
     salary VARCHAR(100),
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `).then(() => {
-  console.log("Jobs table is ready");
+  return pool.query(`
+    ALTER TABLE jobs
+    ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE
+  `);
+}).then(() => {
+  return pool.query(`
+    ALTER TABLE jobs
+    ADD COLUMN IF NOT EXISTS category VARCHAR(100)
+  `);
+}).then(() => {
+  console.log("Jobs table, category and Hot Jobs columns are ready");
 }).catch((error) => {
   console.error("Jobs table error:", error);
 });
@@ -304,6 +338,148 @@ app.get("/verify-email/:token", async (req, res) => {
     res.status(500).send("Email verification failed");
   }
 });
+
+
+app.post("/auth/google", async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        message: "Google credential is required",
+      });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (
+      !payload ||
+      !payload.sub ||
+      !payload.email ||
+      payload.email_verified !== true
+    ) {
+      return res.status(401).json({
+        message: "Google account email is not verified",
+      });
+    }
+
+    const googleId = payload.sub;
+    const email = payload.email.toLowerCase();
+    const name = payload.name || email.split("@")[0];
+
+    let result = await pool.query(
+      `SELECT id, name, email, role
+       FROM users
+       WHERE google_id = $1`,
+      [googleId]
+    );
+
+    let user;
+
+    if (result.rows.length > 0) {
+      user = result.rows[0];
+    } else {
+      result = await pool.query(
+        `SELECT id, name, email, role, google_id
+         FROM users
+         WHERE LOWER(email) = LOWER($1)
+         LIMIT 1`,
+        [email]
+      );
+
+      if (result.rows.length > 0) {
+        const existingUser = result.rows[0];
+
+        if (
+          existingUser.google_id &&
+          existingUser.google_id !== googleId
+        ) {
+          return res.status(409).json({
+            message: "This email is linked to another Google account",
+          });
+        }
+        const updatedUser = await pool.query(
+          `UPDATE users
+           SET google_id = $1,
+               email_verified = TRUE,
+               email_verification_token = NULL
+           WHERE id = $2
+           RETURNING id, name, email, role`,
+          [googleId, existingUser.id]
+        );
+
+        user = updatedUser.rows[0];
+      } else {
+        const randomPassword = require("crypto")
+          .randomBytes(32)
+          .toString("hex");
+
+        const passwordHash = await bcrypt.hash(
+          randomPassword,
+          10
+        );
+
+        const newUser = await pool.query(
+          `INSERT INTO users (
+            name,
+            email,
+            password_hash,
+            role,
+            email_verified,
+            google_id
+          )
+          VALUES ($1, $2, $3, $4, TRUE, $5)
+          RETURNING id, name, email, role`,
+          [
+            name,
+            email,
+            passwordHash,
+            "job_seeker",
+            googleId,
+          ]
+        );
+
+        user = newUser.rows[0];
+      }
+    }
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    res.json({
+      message: "Google login successful",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+
+  } catch (error) {
+    console.error("Google login error:", error);
+
+    res.status(500).json({
+      message: "Google login failed",
+    });
+  }
+});
+
+
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -803,6 +979,7 @@ app.post("/jobs", authenticateToken, async (req, res) => {
     const {
       title,
       company,
+      category,
       location,
       description,
       salary,
@@ -816,12 +993,13 @@ app.post("/jobs", authenticateToken, async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO jobs
-       (title, company, location, description, salary, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id, title, company, location, description, salary, user_id, created_at`,
+       (title, company, category, location, description, salary, user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, title, company, category, location, description, salary, user_id, created_at`,
       [
         title,
         company,
+        category || null, 
         location || null,
         description || null,
         salary || null,
@@ -882,6 +1060,7 @@ app.get("/jobs", async (req, res) => {
         jobs.user_id,
         jobs.title,
         jobs.company,
+        jobs.category,
         jobs.location,
         jobs.description,
         jobs.salary,
@@ -920,6 +1099,7 @@ app.get("/jobs/:id", async (req, res) => {
          user_id,
          title,
          company,
+         category,
          location,
          description,
          salary,
@@ -1147,6 +1327,7 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
     const {
       title,
       company,
+      category,
       location,
       description,
       salary,
@@ -1163,14 +1344,17 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
        SET
          title = $1,
          company = $2,
-         location = $3,
-         description = $4,
-         salary = $5
-       WHERE id = $6 AND user_id = $7
-       RETURNING id, title, company, location, description, salary, user_id, created_at`,
+         category = $3,
+         location = $4,
+         description = $5,
+         salary = $6
+       WHERE id = $7 AND user_id = $8
+       RETURNING id, title, company, category, location,
+                 description, salary, user_id, created_at`,
       [
         title,
         company,
+        category || null,
         location || null,
         description || null,
         salary || null,

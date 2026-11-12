@@ -290,6 +290,10 @@ const toggleSavedJob = (jobId) => {
           </p>
 
           <p>
+            <strong>Category:</strong> {job.category || "Not specified"}
+          </p>
+
+          <p>
             <strong>Location:</strong>{" "}
             {job.location || "Not specified"}
           </p>
@@ -349,6 +353,7 @@ const toggleSavedJob = (jobId) => {
 </div>
 
             <p><strong>Company:</strong> {selectedJob.company}</p>
+            <p><strong>Category:</strong> {selectedJob.category || "Not specified"}</p>
             <p><strong>Location:</strong> {selectedJob.location || "Not specified"}</p>
             <p><strong>Salary:</strong> {selectedJob.salary || "Not specified"}</p>
 

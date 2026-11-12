@@ -1,20 +1,25 @@
+
 import { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
+
 function Login({
   email,
   password,
   setEmail,
   setPassword,
   handleSubmit,
+  onGoogleSuccess,
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [googleError, setGoogleError] = useState("");
 
-    const [showPassword, setShowPassword] = useState(false);
   return (
-    <form onSubmit={(event)=> {
-      console.log("LOGIN FORM SUBMIT");
-       console.log("HANDLE SUBMIT:", handleSubmit);
-  handleSubmit(event);
-}}>
-  
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleSubmit(event);
+      }}
+    >
       <label>
         Email
         <input
@@ -26,31 +31,49 @@ function Login({
         />
       </label>
 
-<label>
-  Password
-  <div className="password-field">
-    <input
-      type={showPassword ? "text" : "password"}
-      value={password}
-      onChange={(event) => setPassword(event.target.value)}
-      placeholder="Password"
-      required
-    />
-    <button
-      type="button"
-      className="password-toggle"
-      onClick={() => setShowPassword(!showPassword)}
-    >
-      {showPassword ? "🙈" : "👁️"}
-    </button>
-  </div>
-</label>
+      <label>
+        Password
+        <div className="password-field">
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Password"
+            required
+          />
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "🙈" : "👁️"}
+          </button>
+        </div>
+      </label>
 
-<button className="submit-button" type="submit">
-  Login
-</button>
+      <button className="submit-button" type="submit">
+        Login
+      </button>
 
+      <div className="social-login">
+        <p>Or continue with</p>
+
+        <GoogleLogin
+          onSuccess={(response) => {
+            setGoogleError("");
+            onGoogleSuccess(response);
+          }}
+          onError={() => {
+            setGoogleError("Google login failed. Please try again.");
+          }}
+        />
+
+        {googleError && (
+          <p className="error-message">{googleError}</p>
+        )}
+      </div>
     </form>
   );
 }
+
 export default Login;

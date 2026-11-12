@@ -6,9 +6,11 @@ function Profile({
   loadJobs,
   showJobForm,
   setShowJobForm,
+  setActiveSection,
   setEditingJobId,
   setJobTitle,
   setJobCompany,
+  setJobCategory,
   setJobLocation,
   setJobSalary,
   setJobDescription,
@@ -39,20 +41,22 @@ function Profile({
   const [selectedJobSeeker, setSelectedJobSeeker] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const handleJobFormToggle = () => {
-    if (showJobForm) {
-      setShowJobForm(false);
-      return;
-    }
+  if (showJobForm) {
+    setShowJobForm(false);
+    return;
+  }
 
-    setEditingJobId(null);
-    setJobTitle("");
-    setJobCompany("");
-    setJobLocation("");
-    setJobSalary("");
-    setJobDescription("");
-    setShowJobForm(true);
-  };
+  setEditingJobId(null);
+  setJobTitle("");
+  setJobCompany("");
+  setJobCategory("");
+  setJobLocation("");
+  setJobSalary("");
+  setJobDescription("");
 
+  setActiveSection("jobs");
+  setShowJobForm(true);
+};
   const handleSaveProfile = async (overrides = {}) => {
   const result = await saveProfile(overrides);
   return result;

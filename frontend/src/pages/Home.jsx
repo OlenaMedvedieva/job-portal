@@ -3,6 +3,7 @@ import useAuth from "../hooks/useAuth.js";
 import useJobs from "../hooks/useJobs.js";
 import { useNavigate , Link } from "react-router-dom";
 import Login from "../components/Login.jsx";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import Register from "../components/Register.jsx";
 import JobList from "../components/JobList.jsx";
 import JobForm from "../components/JobForm.jsx";
@@ -45,6 +46,8 @@ const [citySuggestions, setCitySuggestions] = useState([]);
 const [citiesLoading, setCitiesLoading] = useState(false);
 const [citySearchDone, setCitySearchDone] = useState(false);
 const [minSalary, setMinSalary] = useState("");
+const [categoryFilter, setCategoryFilter] = useState("");
+const [appliedCategory, setAppliedCategory] = useState("");
 const [appliedSearch, setAppliedSearch] = useState("");
 const [appliedLocation, setAppliedLocation] = useState("");
 const [appliedMinSalary, setAppliedMinSalary] = useState("");
@@ -59,12 +62,14 @@ const {
   setEditingJobId,
   jobTitle,
   jobCompany,
+  jobCategory,
   jobLocation,
   jobSalary,
   jobCurrency,
   jobDescription,
   setJobTitle,
   setJobCompany,
+  setJobCategory,
   setJobLocation,
   setJobSalary,
   setJobCurrency,
@@ -123,14 +128,21 @@ useEffect(() => {
 console.log("ALL JOBS:", jobs);
   console.log("TOTAL JOBS:", jobs.length);
 console.log("APPLIED SEARCH:", appliedSearch);
+
+
 const filteredJobs = jobs.filter((job) => {
- const query = appliedSearch.trim().toLowerCase();
-const location = appliedLocation
-  .trim()
-  .split(",")[0]
-  .trim()
-  .toLowerCase();
- const salaryMinimum = Number(appliedMinSalary) || 0;
+  const query = appliedSearch.trim().toLowerCase();
+
+  const location = appliedLocation
+    .trim()
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+
+  const salaryMinimum = Number(appliedMinSalary) || 0;
+
+  const category = appliedCategory.trim().toLowerCase();
+
   const matchesSearch =
     (job.title || "").toLowerCase().includes(query) ||
     (job.company || "").toLowerCase().includes(query);
@@ -140,6 +152,7 @@ const location = appliedLocation
     .includes(location);
 
   const salaryMatch = (job.salary || "").match(/[\d,]+/);
+
   const salary = salaryMatch
     ? Number(salaryMatch[0].replace(/,/g, ""))
     : 0;
@@ -147,8 +160,18 @@ const location = appliedLocation
   const matchesSalary =
     salaryMinimum === 0 || salary >= salaryMinimum;
 
-  return matchesSearch && matchesLocation && matchesSalary;
+  const matchesCategory =
+    !category ||
+    (job.category || "").toLowerCase() === category;
+
+  return (
+    matchesSearch &&
+    matchesLocation &&
+    matchesSalary &&
+    matchesCategory
+  );
 });
+
 console.log("FILTERED JOBS:", filteredJobs);
 const sortedJobs = [...filteredJobs].sort((a, b) => {
   const getSalary = (job) => {
@@ -197,6 +220,7 @@ const {
   user,
   message: authMessage,
   handleSubmit,
+  handleGoogleSuccess,
   loadProfile,
   profileImage,
   setProfileImage,
@@ -476,6 +500,27 @@ const handleInviteCandidate = async (jobId, candidateId) => {
     )}
 </div>
 
+<select
+  value={categoryFilter}
+  onChange={(event) => setCategoryFilter(event.target.value)}
+  aria-label="Filter by job category"
+>
+ <option value="">All Categories</option>
+<option value="IT & Software">IT & Software</option>
+<option value="Production & Manufacturing">Production & Manufacturing</option>
+<option value="Warehouse & Logistics">Warehouse & Logistics</option>
+<option value="Transport & Delivery">Transport & Delivery</option>
+<option value="Retail & Sales">Retail & Sales</option>
+<option value="Office & Administration">Office & Administration</option>
+<option value="Construction">Construction</option>
+<option value="Hotels & Restaurants">Hotels & Restaurants</option>
+<option value="Cleaning">Cleaning</option>
+<option value="Healthcare">Healthcare</option>
+<option value="Education">Education</option>
+<option value="Customer Support">Customer Support</option>
+<option value="Other">Other</option>
+</select>
+
 <input
   type="number"
   min="0"
@@ -522,9 +567,11 @@ const handleInviteCandidate = async (jobId, candidateId) => {
     setSearchQuery("");
     setLocationFilter("");
     setMinSalary("");
+    setCategoryFilter("");
     setAppliedSearch("");
     setAppliedLocation("");
     setAppliedMinSalary("");
+    setAppliedCategory("");
     setSortBy("newest");
   }}
 >
@@ -560,13 +607,19 @@ const handleInviteCandidate = async (jobId, candidateId) => {
             </div>
 
            {mode === "login" ? (
+  <GoogleOAuthProvider
+  clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}
+>
   <Login
     email={email}
     password={password}
     setEmail={setEmail}
     setPassword={setPassword}
     handleSubmit={handleSubmit}
+    onGoogleSuccess={handleGoogleSuccess}
   />
+</GoogleOAuthProvider>
+
 ) : (
  <Register
   name={name}
@@ -625,9 +678,11 @@ saveProfile={async (overrides) => {
   loadJobs={() => loadJobs(setMessage)}
   showJobForm={showJobForm}
   setShowJobForm={setShowJobForm}
+  setActiveSection={setActiveSection}
   setEditingJobId={setEditingJobId}
   setJobTitle={setJobTitle}
   setJobCompany={setJobCompany}
+  setJobCategory={setJobCategory}
   setJobLocation={setJobLocation}
   setJobSalary={setJobSalary}
   setJobDescription={setJobDescription}
@@ -641,12 +696,14 @@ saveProfile={async (overrides) => {
     editingJobId={editingJobId}
     jobTitle={jobTitle}
     jobCompany={jobCompany}
+    jobCategory={jobCategory}
     jobLocation={jobLocation}
     jobSalary={jobSalary}
     jobCurrency={jobCurrency}
     jobDescription={jobDescription}
     setJobTitle={setJobTitle}
     setJobCompany={setJobCompany}
+    setJobCategory={setJobCategory}
     setJobLocation={setJobLocation}
     setJobSalary={setJobSalary}
     setJobCurrency={setJobCurrency}

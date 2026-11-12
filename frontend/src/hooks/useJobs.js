@@ -14,6 +14,7 @@ function useJobs() {
   const [editingJobId, setEditingJobId] = useState(null);
   const [jobTitle, setJobTitle] = useState("");
   const [jobCompany, setJobCompany] = useState("");
+  const [jobCategory, setJobCategory] = useState("");
   const [jobLocation, setJobLocation] = useState("");
   const [jobSalary, setJobSalary] = useState("");
   const [jobCurrency, setJobCurrency] = useState("PLN");
@@ -83,6 +84,7 @@ setJobs(jobs);
 
     setJobTitle(job.title);
     setJobCompany(job.company);
+    setJobCategory(job.category || "");
     setJobLocation(job.location || "");
    const salary = (job.salary || "").trim();
 
@@ -119,6 +121,7 @@ if (salaryMatch) {
           title: jobTitle,
           company: jobCompany,
           location: jobLocation,
+          category: jobCategory,
           salary: jobSalary ? `${jobSalary} ${jobCurrency}` : "",
           description: jobDescription,
         },
@@ -133,6 +136,7 @@ if (salaryMatch) {
 
       setJobTitle("");
       setJobCompany("");
+      setJobCategory("");
       setJobLocation("");
       setJobSalary("");
       setJobCurrency("PLN");
@@ -159,12 +163,14 @@ if (salaryMatch) {
 
     jobTitle,
     jobCompany,
+    jobCategory,
     jobLocation,
     jobSalary,
     jobDescription,
 
     setJobTitle,
     setJobCompany,
+    setJobCategory,
     setJobLocation,
     setJobSalary,
     setJobDescription,

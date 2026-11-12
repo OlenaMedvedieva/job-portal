@@ -63,9 +63,59 @@ const restoreUser = async () => {
 };
 
 restoreUser();
-
-
 }, []);
+
+
+const handleGoogleSuccess = async (googleResponse) => {
+  setMessage("");
+
+  try {
+    const response = await fetch(`${API_URL}/auth/google`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        credential: googleResponse.credential,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.message || "Google login failed");
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+
+    try {
+      const profileData = await getProfile(data.token);
+      const profile = profileData.user || profileData;
+
+      setUser(profile);
+      setJobTitle(profile.job_title || "");
+      setProfileImage(profile.profile_image || "");
+      setCity(profile.city || "");
+      setSkills(profile.skills || "");
+      setExperience(profile.experience || "");
+      setEducation(profile.education || "");
+    } catch (profileError) {
+      console.error("Google profile loading error:", profileError);
+
+      setUser(data.user);
+      setMessage(
+        "Google login successful, but profile could not be loaded."
+      );
+      return;
+    }
+
+    setMessage("Google login successful!");
+  } catch (error) {
+    console.error("Google login error:", error);
+    setMessage("Cannot connect to the server");
+  }
+};
 
 const handleSubmit = async (event) => {
 event.preventDefault();
@@ -296,6 +346,7 @@ return {
   user,
   message,
   handleSubmit,
+  handleGoogleSuccess,
   loadProfile,
   loadApplications,
   withdrawApplication: withdrawApplicationForUser,

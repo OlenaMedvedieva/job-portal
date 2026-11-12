@@ -59,12 +59,14 @@ function JobForm({
   editingJobId,
   jobTitle,
   jobCompany,
+  jobCategory,
   jobLocation,
   jobSalary,
    jobCurrency,
   jobDescription,
   setJobTitle,
   setJobCompany,
+  setJobCategory,
   setJobLocation,
   setJobSalary,
    setJobCurrency,
@@ -240,6 +242,30 @@ if (company.length < 2) {
   <small className="field-error">{errors.company}</small>
 )}
       </label>
+
+<label>
+  Job category
+  <select
+    value={jobCategory || ""}
+    onChange={(event) => setJobCategory(event.target.value)}
+    required
+  >
+    <option value="">Select a category</option>
+    <option value="IT & Software">IT & Software</option>
+    <option value="Production & Manufacturing">Production & Manufacturing</option>
+    <option value="Warehouse & Logistics">Warehouse & Logistics</option>
+    <option value="Transport & Delivery">Transport & Delivery</option>
+    <option value="Retail & Sales">Retail & Sales</option>
+    <option value="Office & Administration">Office & Administration</option>
+    <option value="Construction">Construction</option>
+    <option value="Hotels & Restaurants">Hotels & Restaurants</option>
+    <option value="Cleaning">Cleaning</option>
+    <option value="Healthcare">Healthcare</option>
+    <option value="Education">Education</option>
+    <option value="Customer Support">Customer Support</option>
+    <option value="Other">Other</option>
+  </select>
+</label>
 
       <label className="location-field">
         Location
