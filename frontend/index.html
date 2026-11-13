@@ -14,6 +14,32 @@
   </head>
   <body>
     <div id="root"></div>
+
+<div id="fb-root"></div>
+
+<script>
+  window.fbAsyncInit = function () {
+    FB.init({
+      appId: "1701337881327584",
+      cookie: true,
+      xfbml: true,
+      version: "v27.0",
+    });
+  };
+
+  (function (d, s, id) {
+    var js;
+    var fjs = d.getElementsByTagName(s)[0];
+
+    if (d.getElementById(id)) return;
+
+    js = d.createElement(s);
+    js.id = id;
+    js.src = "https://connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+  })(document, "script", "facebook-jssdk");
+</script>
+
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

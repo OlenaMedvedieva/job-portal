@@ -204,7 +204,6 @@ code {
 .job-seeker-card strong {
   color: #1f2937;
 }
-/* Job Seeker Header */
 
 .job-seeker-header button {
   display: flex;
@@ -350,4 +349,61 @@ code {
 .applications .application-card:hover {
   border-color: #a78bfa;
   box-shadow: 0 3px 10px rgba(124, 58, 237, 0.09);
+}
+
+.social-login {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.social-login > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.social-login-buttons {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.social-login-buttons > div {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.facebook-login-button {
+  width: 300px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.facebook-login-button:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.facebook-icon {
+  color: #1877f2;
+  font-size: 22px;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
 }

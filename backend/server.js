@@ -130,6 +130,25 @@ pool.query(`
 });
 
 pool.query(`
+  ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS facebook_id VARCHAR(255)
+`).then(() => {
+  console.log("Users Facebook ID column is ready");
+}).catch((error) => {
+  console.error("Users Facebook ID column error:", error);
+});
+
+pool.query(`
+  CREATE UNIQUE INDEX IF NOT EXISTS users_facebook_id_unique
+  ON users (facebook_id)
+  WHERE facebook_id IS NOT NULL
+`).then(() => {
+  console.log("Facebook ID unique index is ready");
+}).catch((error) => {
+  console.error("Facebook ID unique index error:", error);
+});
+
+pool.query(`
   CREATE TABLE IF NOT EXISTS jobs (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -475,6 +494,179 @@ app.post("/auth/google", async (req, res) => {
 
     res.status(500).json({
       message: "Google login failed",
+    });
+  }
+});
+
+
+app.post("/auth/facebook", async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({
+        message: "Facebook access token is required",
+      });
+    }
+
+
+    const appAccessToken =
+      `${process.env.FACEBOOK_APP_ID}|${process.env.FACEBOOK_APP_SECRET}`;
+
+    const debugResponse = await fetch(
+      `https://graph.facebook.com/debug_token?input_token=${encodeURIComponent(accessToken)}&access_token=${encodeURIComponent(appAccessToken)}`
+    );
+
+    const debugData = await debugResponse.json();
+   
+   console.log("Facebook token check:", {
+  httpOk: debugResponse.ok,
+  isValid: debugData.data?.is_valid,
+  tokenAppId: debugData.data?.app_id,
+  expectedAppId: process.env.FACEBOOK_APP_ID,
+  appSecretLoaded: Boolean(process.env.FACEBOOK_APP_SECRET),
+  appSecretLength: process.env.FACEBOOK_APP_SECRET?.length,
+  error: debugData.error?.message,
+});
+
+    if (
+      !debugResponse.ok ||
+      !debugData.data ||
+      !debugData.data.is_valid ||
+      String(debugData.data.app_id) !==
+        String(process.env.FACEBOOK_APP_ID)
+    ) {
+      return res.status(401).json({
+        message: "Invalid Facebook access token",
+      });
+    }
+
+    const facebookResponse = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${encodeURIComponent(accessToken)}`
+    );
+
+    const facebookData = await facebookResponse.json();
+
+    if (
+      !facebookResponse.ok ||
+      !facebookData.id ||
+      !facebookData.email ||
+      String(debugData.data.user_id) !== String(facebookData.id)
+    ) {
+      return res.status(401).json({
+        message: "Could not verify Facebook account or email",
+      });
+    }
+
+    const facebookId = facebookData.id;
+    const email = facebookData.email.toLowerCase();
+    const name = facebookData.name || email.split("@")[0];
+
+    let result = await pool.query(
+      `SELECT id, name, email, role
+       FROM users
+       WHERE facebook_id = $1`,
+      [facebookId]
+    );
+
+    let user;
+
+    if (result.rows.length > 0) {
+      user = result.rows[0];
+    } else {
+      result = await pool.query(
+        `SELECT id, name, email, role, facebook_id
+         FROM users
+         WHERE LOWER(email) = LOWER($1)
+         LIMIT 1`,
+        [email]
+      );
+
+      if (result.rows.length > 0) {
+        const existingUser = result.rows[0];
+
+        if (
+          existingUser.facebook_id &&
+          existingUser.facebook_id !== facebookId
+        ) {
+          return res.status(409).json({
+            message: "This email is linked to another Facebook account",
+          });
+        }
+
+        const updatedUser = await pool.query(
+          `UPDATE users
+           SET facebook_id = $1,
+               email_verified = TRUE,
+               email_verification_token = NULL
+           WHERE id = $2
+           RETURNING id, name, email, role`,
+          [facebookId, existingUser.id]
+        );
+
+        user = updatedUser.rows[0];
+      } else {
+        const randomPassword = require("crypto")
+          .randomBytes(32)
+          .toString("hex");
+
+        const passwordHash = await bcrypt.hash(
+          randomPassword,
+          10
+        );
+
+        const newUser = await pool.query(
+          `INSERT INTO users (
+            name,
+            email,
+            password_hash,
+            role,
+            email_verified,
+            facebook_id
+          )
+          VALUES ($1, $2, $3, $4, TRUE, $5)
+          RETURNING id, name, email, role`,
+          [
+            name,
+            email,
+            passwordHash,
+            "job_seeker",
+            facebookId,
+          ]
+        );
+
+        user = newUser.rows[0];
+      }
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1h",
+      }
+    );
+
+    res.json({
+      message: "Facebook login successful",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+
+  } catch (error) {
+    console.error("Facebook login error:", error);
+
+    res.status(500).json({
+      message: "Facebook login failed",
     });
   }
 });

@@ -221,6 +221,7 @@ const {
   message: authMessage,
   handleSubmit,
   handleGoogleSuccess,
+  handleFacebookSuccess,
   loadProfile,
   profileImage,
   setProfileImage,
@@ -617,6 +618,7 @@ const handleInviteCandidate = async (jobId, candidateId) => {
     setPassword={setPassword}
     handleSubmit={handleSubmit}
     onGoogleSuccess={handleGoogleSuccess}
+    onFacebookSuccess={handleFacebookSuccess}
   />
 </GoogleOAuthProvider>
 

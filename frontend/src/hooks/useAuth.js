@@ -117,6 +117,57 @@ const handleGoogleSuccess = async (googleResponse) => {
   }
 };
 
+
+const handleFacebookSuccess = async (accessToken) => {
+  setMessage("");
+
+  try {
+    const response = await fetch(`${API_URL}/auth/facebook`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ accessToken }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.message || "Facebook login failed");
+      return;
+    }
+
+    localStorage.setItem("token", data.token);
+
+    try {
+      const profileData = await getProfile(data.token);
+      const profile = profileData.user || profileData;
+
+      setUser(profile);
+      setJobTitle(profile.job_title || "");
+      setProfileImage(profile.profile_image || "");
+      setCity(profile.city || "");
+      setSkills(profile.skills || "");
+      setExperience(profile.experience || "");
+      setEducation(profile.education || "");
+    } catch (profileError) {
+      console.error("Facebook profile loading error:", profileError);
+
+      setUser(data.user);
+      setMessage(
+        "Facebook login successful, but profile could not be loaded."
+      );
+      return;
+    }
+
+    setMessage("Facebook login successful!");
+  } catch (error) {
+    console.error("Facebook login error:", error);
+    setMessage("Cannot connect to the server");
+  }
+};
+
+
 const handleSubmit = async (event) => {
 event.preventDefault();
 setMessage("");
@@ -128,6 +179,8 @@ const body =
   mode === "login"
     ? { email, password }
     : { name, email, password, role };
+
+
 
 try {
   console.log("LOGIN FETCH:", API_URL, endpoint, body);
@@ -347,6 +400,7 @@ return {
   message,
   handleSubmit,
   handleGoogleSuccess,
+  handleFacebookSuccess,
   loadProfile,
   loadApplications,
   withdrawApplication: withdrawApplicationForUser,

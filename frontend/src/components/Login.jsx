@@ -9,9 +9,11 @@ function Login({
   setPassword,
   handleSubmit,
   onGoogleSuccess,
+  onFacebookSuccess
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [googleError, setGoogleError] = useState("");
+  const [facebookError, setFacebookError] = useState("");
 
   return (
     <form
@@ -55,23 +57,72 @@ function Login({
         Login
       </button>
 
-      <div className="social-login">
-        <p>Or continue with</p>
+     
+<div className="social-login">
+  <p>Or continue with</p>
 
-        <GoogleLogin
-          onSuccess={(response) => {
-            setGoogleError("");
-            onGoogleSuccess(response);
-          }}
-          onError={() => {
-            setGoogleError("Google login failed. Please try again.");
-          }}
-        />
+  <div className="social-login-buttons">
+    <GoogleLogin
+      onSuccess={(response) => {
+        setGoogleError("");
+        onGoogleSuccess(response);
+      }}
+      onError={() => {
+        setGoogleError("Google login failed. Please try again.");
+      }}
+      theme="outline"
+      size="large"
+      shape="rectangular"
+      text="continue_with"
+      logo_alignment="center"
+      width="300"
+    />
 
-        {googleError && (
-          <p className="error-message">{googleError}</p>
-        )}
-      </div>
+    <button
+      type="button"
+      className="facebook-login-button"
+      onClick={() => {
+        setFacebookError("");
+
+        if (!window.FB) {
+          setFacebookError(
+            "Facebook Login is not ready. Please refresh the page."
+          );
+          return;
+        }
+
+        window.FB.login(
+          (response) => {
+            if (response.authResponse?.accessToken) {
+              onFacebookSuccess(
+                response.authResponse.accessToken
+              );
+            } else {
+              setFacebookError(
+                "Facebook login was cancelled or failed."
+              );
+            }
+          },
+          {
+            scope: "email,public_profile",
+          }
+        );
+      }}
+    >
+      <span className="facebook-icon">f</span>
+      Continue with Facebook
+    </button>
+  </div>
+
+  {facebookError && (
+    <p className="error-message">{facebookError}</p>
+  )}
+
+  {googleError && (
+    <p className="error-message">{googleError}</p>
+  )}
+</div>
+
     </form>
   );
 }
