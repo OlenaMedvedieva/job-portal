@@ -1166,6 +1166,21 @@ app.get(
   }
 );
 
+const ALLOWED_JOB_CATEGORIES = [
+  "IT & Software",
+  "Production & Manufacturing",
+  "Warehouse & Logistics",
+  "Transport & Delivery",
+  "Retail & Sales",
+  "Office & Administration",
+  "Construction",
+  "Hotels & Restaurants",
+  "Cleaning",
+  "Healthcare",
+  "Education",
+  "Customer Support",
+  "Other",
+];
 app.post("/jobs", authenticateToken, async (req, res) => {
   try {
     const {
@@ -1182,6 +1197,14 @@ app.post("/jobs", authenticateToken, async (req, res) => {
         message: "Title and company are required",
       });
     }
+    const categoryValue =
+  typeof category === "string" ? category.trim() : "";
+
+if (!ALLOWED_JOB_CATEGORIES.includes(categoryValue)) {
+  return res.status(400).json({
+    message: "Please select a valid job category",
+  });
+}
 
     const result = await pool.query(
       `INSERT INTO jobs
@@ -1191,7 +1214,7 @@ app.post("/jobs", authenticateToken, async (req, res) => {
       [
         title,
         company,
-        category || null, 
+        categoryValue,
         location || null,
         description || null,
         salary || null,
@@ -1278,6 +1301,33 @@ app.get("/jobs", async (req, res) => {
     });
   }
 });
+
+app.get("/job-categories", async (req, res) => {
+  try {
+   const result = await pool.query(
+  `SELECT allowed.category
+   FROM unnest($1::text[])
+     WITH ORDINALITY AS allowed(category, category_order)
+   WHERE EXISTS (
+     SELECT 1
+     FROM jobs
+     WHERE jobs.category = allowed.category
+   )
+   ORDER BY allowed.category_order`,
+  [ALLOWED_JOB_CATEGORIES]
+);
+
+    res.json({
+      categories: result.rows.map((row) => row.category),
+    });
+  } catch (error) {
+    console.error("Get job categories error:", error);
+
+    res.status(500).json({
+      message: "Failed to load job categories",
+    });
+  }
+});
 app.get("/jobs/:id", async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -1332,6 +1382,7 @@ app.get("/jobs/:id", async (req, res) => {
     });
   }
 });
+
 
 app.post("/jobs/:id/apply", authenticateToken, async (req, res) => {
   try {
@@ -1530,6 +1581,14 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
         message: "Title and company are required",
       });
     }
+    const categoryValue =
+  typeof category === "string" ? category.trim() : "";
+
+if (!ALLOWED_JOB_CATEGORIES.includes(categoryValue)) {
+  return res.status(400).json({
+    message: "Please select a valid job category",
+  });
+}
 
     const result = await pool.query(
       `UPDATE jobs
@@ -1546,7 +1605,7 @@ app.put("/jobs/:id", authenticateToken, async (req, res) => {
       [
         title,
         company,
-        category || null,
+        categoryValue,
         location || null,
         description || null,
         salary || null,

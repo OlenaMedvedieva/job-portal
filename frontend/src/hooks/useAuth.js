@@ -368,12 +368,15 @@ const resendVerification = async () => {
   }
 };
 const logout = () => {
-localStorage.removeItem("token");
-setUser(null);
-setName("");
-setEmail("");
-setPassword("");
-setRole("job_seeker");
+  localStorage.removeItem("token");
+  setUser(null);
+  setName("");
+  setEmail("");
+  setPassword("");
+  setRole("job_seeker");
+  setMode("login");
+
+  window.location.href = "/";
 };
 return {
   mode,

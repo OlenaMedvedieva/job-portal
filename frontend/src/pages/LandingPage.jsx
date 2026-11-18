@@ -11,7 +11,61 @@ function LandingPage() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [applyMessage, setApplyMessage] = useState("");
   const [isApplying, setIsApplying] = useState(false);
-  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedJobId, setSelectedJobId] = useState(null);
+  const [locationFilter, setLocationFilter] = useState("");
+  const [minSalary, setMinSalary] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [visibleJobsCount, setVisibleJobsCount] = useState(6);
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationSelected, setLocationSelected] = useState(false);
+ useEffect(() => {
+  const query = locationFilter.trim();
+
+  if (locationSelected || query.length < 2) {
+    setLocationSuggestions([]);
+    setLocationLoading(false);
+    return;
+  }
+
+  let cancelled = false;
+
+  const timer = setTimeout(async () => {
+    try {
+      setLocationLoading(true);
+
+      const response = await fetch(
+        `${API_URL}/locations/search?text=${encodeURIComponent(query)}`
+      );
+
+      const data = await response.json();
+
+      if (!cancelled) {
+        setLocationSuggestions(
+          response.ok ? data.cities || [] : []
+        );
+      }
+    } catch (error) {
+      console.error("City search error:", error);
+
+      if (!cancelled) {
+        setLocationSuggestions([]);
+      }
+    } finally {
+      if (!cancelled) {
+        setLocationLoading(false);
+      }
+    }
+  }, 400);
+
+  return () => {
+    cancelled = true;
+    clearTimeout(timer);
+  };
+}, [locationFilter, locationSelected]);
   const [currentUserId, setCurrentUserId] = useState(null);
 
 const [savedJobsByUser, setSavedJobsByUser] = useState(() => {
@@ -22,6 +76,34 @@ const [savedJobsByUser, setSavedJobsByUser] = useState(() => {
     return {};
   }
 });
+useEffect(() => {
+  let cancelled = false;
+
+  const loadCategories = async () => {
+    try {
+      const response = await fetch(`${API_URL}/job-categories`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to load categories");
+      }
+
+      if (!cancelled) {
+        setAvailableCategories(
+          Array.isArray(data.categories) ? data.categories : []
+        );
+      }
+    } catch (error) {
+      console.error("Load categories error:", error);
+    }
+  };
+
+  loadCategories();
+
+  return () => {
+    cancelled = true;
+  };
+}, []);
 
 useEffect(() => {
   const token = localStorage.getItem("token");
@@ -101,6 +183,66 @@ const savedJobIds = currentUserKey
 
 const isJobSaved = (jobId) =>
   savedJobIds.includes(String(jobId));
+const filteredJobs = jobs
+  .filter((job) => {
+    const query = searchQuery.trim().toLowerCase();
+    const city = locationFilter.trim().toLowerCase();
+
+    const matchesQuery = selectedJobId
+  ? String(job.id) === String(selectedJobId)
+  : !query ||
+    `${job.title || ""} ${job.company || ""}`
+      .toLowerCase()
+      .includes(query);
+
+    const matchesLocation =
+      !city ||
+      String(job.location || "").toLowerCase().includes(city);
+
+    const salary = Number(
+      String(job.salary || "").replace(/[^\d]/g, "")
+    );
+const matchesSalary =
+  !minSalary ||
+  (salary > 0 && salary >= Number(minSalary));
+
+const matchesCategory =
+  !categoryFilter || job.category === categoryFilter;
+
+return (
+  matchesQuery &&
+  matchesLocation &&
+  matchesSalary &&
+  matchesCategory
+);
+  })
+  .sort((a, b) => {
+    if (sortBy === "salaryHigh" || sortBy === "salaryLow") {
+      const salaryA = Number(String(a.salary || "").replace(/[^\d]/g, ""));
+      const salaryB = Number(String(b.salary || "").replace(/[^\d]/g, ""));
+
+      return sortBy === "salaryHigh"
+        ? salaryB - salaryA
+        : salaryA - salaryB;
+    }
+
+    const dateA = new Date(a.created_at).getTime() || 0;
+    const dateB = new Date(b.created_at).getTime() || 0;
+
+    return dateB - dateA;
+  });
+  const jobSuggestions =
+  searchQuery.trim().length >= 2 && !selectedJobId
+    ? jobs
+        .filter((job) => {
+          const query = searchQuery.trim().toLowerCase();
+
+          return `${job.title || ""} ${job.company || ""}`
+            .toLowerCase()
+            .includes(query);
+        })
+        .slice(0, 5)
+    : [];
 
 const toggleSavedJob = (jobId) => {
   if (!currentUserKey) {
@@ -175,7 +317,8 @@ const toggleSavedJob = (jobId) => {
           <a href="#latest-jobs">Latest Jobs</a>
           <a href="#how-it-works">How it works</a>
           <a href="#employers">For Employers</a>
-          <Link to="/dashboard">Login / Register</Link>
+     <Link to="/dashboard?mode=login">Login</Link>
+     <Link to="/dashboard?mode=register">Register</Link>
         </nav>
       </header>
 
@@ -195,10 +338,12 @@ const toggleSavedJob = (jobId) => {
           </p>
 
           <div className="landing-buttons">
-            <Link to="/dashboard" className="landing-primary-button">
-              Get Started
+           <Link
+            to="/dashboard?mode=register"
+            className="landing-primary-button"
+          >
+            Get Started
             </Link>
-
             <a href="#how-it-works" className="landing-secondary-button">
               Learn More
             </a>
@@ -234,6 +379,126 @@ const toggleSavedJob = (jobId) => {
 <section id="latest-jobs" className="landing-jobs">
   <h2>Available Jobs</h2>
   <p>Explore job opportunities from our employers.</p>
+  <div className="landing-job-filters">
+ <div className="landing-title-search">
+  <input
+    type="search"
+    placeholder="Search by job title or company..."
+    value={searchQuery}
+    onChange={(event) => {
+      setSearchQuery(event.target.value);
+      setSelectedJobId(null);
+      setVisibleJobsCount(6);
+    }}
+    autoComplete="off"
+  />
+
+  {jobSuggestions.length > 0 && (
+    <div className="landing-job-suggestions">
+      {jobSuggestions.map((job) => (
+        <button
+          type="button"
+          key={job.id}
+          className="landing-job-suggestion"
+          onClick={() => {
+            setSelectedJobId(String(job.id));
+            setSearchQuery(job.title || "");
+            setVisibleJobsCount(6);
+          }}
+        >
+          <span>{job.title}</span>
+          <small>{job.company}</small>
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+  <label className="location-field">
+  <input
+    type="text"
+    placeholder="Start typing a city..."
+    value={locationFilter}
+    onChange={(event) => {
+      setLocationFilter(event.target.value);
+      setLocationSelected(false);
+    }}
+    autoComplete="off"
+  />
+
+  {locationLoading && (
+    <small>Searching cities...</small>
+  )}
+
+  {locationSuggestions.length > 0 && (
+    <div className="location-suggestions">
+      {locationSuggestions.map((cityItem, index) => (
+        <button
+          type="button"
+          key={`${cityItem.formatted}-${index}`}
+          className="location-suggestion"
+          onClick={() => {
+            setLocationFilter(cityItem.formatted);
+            setLocationSelected(true);
+            setLocationSuggestions([]);
+          }}
+        >
+          {cityItem.formatted}
+        </button>
+      ))}
+    </div>
+  )}
+
+  {!locationLoading &&
+    locationFilter.trim().length >= 2 &&
+    !locationSelected &&
+    locationSuggestions.length === 0 && (
+      <small>No cities found</small>
+    )}
+</label>
+
+  <input
+    type="number"
+    min="0"
+    placeholder="Minimum salary (PLN)"
+    value={minSalary}
+    onChange={(event) => setMinSalary(event.target.value)}
+  />
+<select
+  value={categoryFilter}
+  onChange={(event) => setCategoryFilter(event.target.value)}
+>
+  <option value="">All categories</option>
+
+  {availableCategories.map((category) => (
+    <option key={category} value={category}>
+      {category}
+    </option>
+  ))}
+</select>
+  <select
+    value={sortBy}
+    onChange={(event) => setSortBy(event.target.value)}
+  >
+    <option value="newest">Newest first</option>
+    <option value="salaryHigh">Highest salary</option>
+    <option value="salaryLow">Lowest salary</option>
+  </select>
+</div>
+<button
+  type="button"
+  className="landing-clear-filters"
+  onClick={() => {
+    setSearchQuery("");
+    setLocationFilter("");
+    setMinSalary("");
+    setCategoryFilter("");
+    setSortBy("newest");
+    setLocationSuggestions([]);
+    setLocationSelected(false);
+  }}
+>
+  Clear filters
+</button>
 
   {jobsLoading ? (
     <p>Loading jobs...</p>
@@ -241,9 +506,37 @@ const toggleSavedJob = (jobId) => {
     <p className="message">{jobsError}</p>
   ) : jobs.length === 0 ? (
     <p>No jobs available right now.</p>
+
+  ) : filteredJobs.length === 0 ? (
+    <div className="landing-no-results">
+      <p>No jobs found matching your criteria.</p>
+
+      <button
+        type="button"
+        className="landing-clear-filters"
+        onClick={() => {
+          setSearchQuery("");
+          setLocationFilter("");
+          setMinSalary("");
+          setCategoryFilter("");
+          setSortBy("newest");
+          setLocationSuggestions([]);
+          setLocationSelected(false);
+          setVisibleJobsCount(6);
+        }}
+      >
+        Reset filters
+      </button>
+    </div>
+
   ) : (
-    <div className="landing-job-grid">
-      {jobs.slice(0, 6).map((job) => (
+    <>
+  <p className="landing-results-count">
+    Showing {Math.min(visibleJobsCount, filteredJobs.length)} of {filteredJobs.length} jobs
+  </p>
+
+  <div className="landing-job-grid">
+      {filteredJobs.slice(0, visibleJobsCount).map((job) => (
         <article
   className="landing-job-card"
   key={job.id}
@@ -302,10 +595,22 @@ const toggleSavedJob = (jobId) => {
             <strong>Salary:</strong>{" "}
             {job.salary || "Not specified"}
           </p>
-
         </article>
       ))}
-    </div>
+      </div>
+
+      {filteredJobs.length > visibleJobsCount && (
+        <button
+          type="button"
+          className="landing-show-more"
+          onClick={() =>
+            setVisibleJobsCount((previous) => previous + 6)
+          }
+        >
+          Show More
+        </button>
+      )}
+    </>
   )}
 </section>
 
@@ -376,13 +681,17 @@ const toggleSavedJob = (jobId) => {
                 <h3>Interested in this job?</h3>
                 <p>Log in or create an account to apply.</p>
 
-                <Link
-                  to="/dashboard"
-                  className="landing-primary-button"
-                >
-                  Login / Register
-                </Link>
-              </div>
+              <div className="landing-buttons">
+     <Link to="/dashboard?mode=login" className="landing-primary-button">
+      Login
+     </Link>
+
+     <Link to="/dashboard?mode=register" className="landing-secondary-button">
+      Register
+    </Link>
+  </div>
+     </div>
+
             ) : (
               <div className="apply-section">
                 <button
@@ -421,9 +730,12 @@ const toggleSavedJob = (jobId) => {
           and find the right people for your company.
         </p>
 
-        <Link to="/dashboard" className="landing-primary-button">
-          Start Hiring
-        </Link>
+       <Link
+          to="/dashboard?mode=register"
+         className="landing-primary-button"
+      >
+         Start Hiring
+       </Link>
       </section>
 
       <footer className="landing-footer">
