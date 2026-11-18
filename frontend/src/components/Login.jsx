@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-
+import { Turnstile } from "@marsidev/react-turnstile";
 function Login({
   email,
   password,
@@ -14,12 +14,13 @@ function Login({
   const [showPassword, setShowPassword] = useState(false);
   const [googleError, setGoogleError] = useState("");
   const [facebookError, setFacebookError] = useState("");
-
+  const [turnstileToken, setTurnstileToken] = useState("");
+ console.log("TURNSTILE SITE KEY:", import.meta.env.VITE_TURNSTILE_SITE_KEY);
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        handleSubmit(event);
+        handleSubmit(event, turnstileToken);
       }}
     >
       <label>
@@ -52,11 +53,19 @@ function Login({
           </button>
         </div>
       </label>
-
-      <button className="submit-button" type="submit">
-        Login
-      </button>
-
+ <Turnstile
+  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+  onSuccess={(token) => setTurnstileToken(token)}
+  onExpire={() => setTurnstileToken("")}
+  onError={() => setTurnstileToken("")}
+/>
+    <button
+  className="submit-button"
+  type="submit"
+  disabled={!turnstileToken}
+>
+  Login
+</button>
      
 <div className="social-login">
   <p>Or continue with</p>

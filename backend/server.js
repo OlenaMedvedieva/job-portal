@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { OAuth2Client } = require("google-auth-library");
@@ -214,6 +215,56 @@ pool.query(`
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    message: "Too many attempts. Please try again in 15 minutes.",
+  },
+});
+const verifyTurnstile = async (req, res, next) => {
+  try {
+    const token = req.body.turnstileToken;
+
+    if (!token) {
+      return res.status(400).json({
+        message: "CAPTCHA verification is required",
+      });
+    }
+
+    const response = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          secret: process.env.TURNSTILE_SECRET_KEY,
+          response: token,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!data.success) {
+      return res.status(403).json({
+        message: "CAPTCHA verification failed",
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Turnstile verification error:", error);
+
+    return res.status(500).json({
+      message: "CAPTCHA verification unavailable",
+    });
+  }
+};
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
@@ -245,25 +296,9 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/db-test", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT NOW() AS current_time");
 
-    res.json({
-      database: "connected",
-      current_time: result.rows[0].current_time,
-    });
-  } catch (error) {
-    console.error("Database connection error:", error);
 
-    res.status(500).json({
-      database: "connection failed",
-      error: error.message,
-    });
-  }
-});
-
-app.post("/register", async (req, res) => {
+app.post("/register", authLimiter, verifyTurnstile, async (req, res) => {
   try {
     const { name, email, password , role } = req.body;
 
@@ -272,6 +307,14 @@ app.post("/register", async (req, res) => {
         message: "Name, email and password are required",
       });
     }
+    const allowedRoles = ["job_seeker", "employer"];
+const selectedRole = role || "job_seeker";
+
+if (!allowedRoles.includes(selectedRole)) {
+  return res.status(400).json({
+    message: "Invalid user role",
+  });
+}
 
     const existingUser = await pool.query(
       "SELECT id FROM users WHERE email = $1",
@@ -302,7 +345,7 @@ const result = await pool.query(
     name,
     email,
     passwordHash,
-    role || "job_seeker",
+    selectedRole,
     verificationToken,
   ]
 );
@@ -359,7 +402,7 @@ app.get("/verify-email/:token", async (req, res) => {
 });
 
 
-app.post("/auth/google", async (req, res) => {
+app.post("/auth/google", authLimiter, async (req, res) => {
   try {
     const { credential } = req.body;
 
@@ -499,7 +542,7 @@ app.post("/auth/google", async (req, res) => {
 });
 
 
-app.post("/auth/facebook", async (req, res) => {
+app.post("/auth/facebook",  authLimiter, async (req, res) => {
   try {
     const { accessToken } = req.body;
 
@@ -672,7 +715,7 @@ app.post("/auth/facebook", async (req, res) => {
 });
 
 
-app.post("/login", async (req, res) => {
+app.post("/login", authLimiter, verifyTurnstile, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -742,7 +785,7 @@ app.post("/login", async (req, res) => {
     });
   }
 });
-app.post("/resend-verification", async (req, res) => {
+app.post("/resend-verification", authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -1183,6 +1226,11 @@ const ALLOWED_JOB_CATEGORIES = [
 ];
 app.post("/jobs", authenticateToken, async (req, res) => {
   try {
+        if (req.user.role !== "employer") {
+      return res.status(403).json({
+        message: "Only employers can create jobs",
+      });
+    }
     const {
       title,
       company,
@@ -1441,8 +1489,12 @@ app.post("/jobs/:id/apply", authenticateToken, async (req, res) => {
 
 app.get("/jobs/:id/applications", authenticateToken, async (req, res) => {
   try {
+        if (req.user.role !== "employer") {
+      return res.status(403).json({
+        message: "Only employers can view applications",
+      });
+    }
     const jobId = req.params.id;
-
     const result = await pool.query(
       `SELECT
         applications.id,
@@ -1481,8 +1533,21 @@ app.get("/jobs/:id/applications", authenticateToken, async (req, res) => {
 
 app.put("/applications/:id/status", authenticateToken, async (req, res) => {
   try {
-    const applicationId = req.params.id;
-    const { status } = req.body;
+    if (req.user.role !== "employer") {
+  return res.status(403).json({
+    message: "Only employers can update application status",
+  });
+}
+
+const applicationId = Number(req.params.id);
+
+if (!Number.isInteger(applicationId) || applicationId <= 0) {
+  return res.status(400).json({
+    message: "Invalid application ID",
+  });
+}
+
+const { status } = req.body;
 
     if (!["accepted", "rejected"].includes(status)) {
       return res.status(400).json({
@@ -1527,7 +1592,19 @@ app.put("/applications/:id/status", authenticateToken, async (req, res) => {
 
 app.put("/applications/:id/withdraw", authenticateToken, async (req, res) => {
   try {
-    const applicationId = req.params.id;
+    if (req.user.role !== "job_seeker") {
+  return res.status(403).json({
+    message: "Only job seekers can withdraw applications",
+  });
+}
+
+const applicationId = Number(req.params.id);
+
+if (!Number.isInteger(applicationId) || applicationId <= 0) {
+  return res.status(400).json({
+    message: "Invalid application ID",
+  });
+}
 
     const result = await pool.query(
       `UPDATE applications
@@ -1565,8 +1642,19 @@ app.put("/applications/:id/withdraw", authenticateToken, async (req, res) => {
 
 app.put("/jobs/:id", authenticateToken, async (req, res) => {
   try {
-    const jobId = req.params.id;
+if (req.user.role !== "employer") {
+  return res.status(403).json({
+    message: "Only employers can update jobs",
+  });
+}
 
+const jobId = Number(req.params.id);
+
+if (!Number.isInteger(jobId) || jobId <= 0) {
+  return res.status(400).json({
+    message: "Invalid job ID",
+  });
+}
     const {
       title,
       company,
@@ -1635,8 +1723,19 @@ if (!ALLOWED_JOB_CATEGORIES.includes(categoryValue)) {
 
 app.delete("/jobs/:id", authenticateToken, async (req, res) => {
   try {
-    const jobId = req.params.id;
+if (req.user.role !== "employer") {
+  return res.status(403).json({
+    message: "Only employers can delete jobs",
+  });
+}
 
+const jobId = Number(req.params.id);
+
+if (!Number.isInteger(jobId) || jobId <= 0) {
+  return res.status(400).json({
+    message: "Invalid job ID",
+  });
+}
     const result = await pool.query(
       `DELETE FROM jobs
        WHERE id = $1 AND user_id = $2

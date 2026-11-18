@@ -682,13 +682,16 @@ const toggleSavedJob = (jobId) => {
                 <p>Log in or create an account to apply.</p>
 
               <div className="landing-buttons">
-     <Link to="/dashboard?mode=login" className="landing-primary-button">
-      Login
-     </Link>
-
-     <Link to="/dashboard?mode=register" className="landing-secondary-button">
-      Register
-    </Link>
+    {localStorage.getItem("token") ? (
+  <Link to="/dashboard" className="landing-primary-button">
+    My Dashboard
+  </Link>
+) : (
+  <>
+    <Link to="/dashboard?mode=login">Login</Link>
+    <Link to="/dashboard?mode=register">Register</Link>
+  </>
+)}
   </div>
      </div>
 

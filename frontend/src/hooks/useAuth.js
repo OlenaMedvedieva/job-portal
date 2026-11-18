@@ -168,19 +168,16 @@ const handleFacebookSuccess = async (accessToken) => {
 };
 
 
-const handleSubmit = async (event) => {
+const handleSubmit = async (event, turnstileToken) => {
 event.preventDefault();
 setMessage("");
 
 
 const endpoint = mode === "login" ? "/login" : "/register";
-
 const body =
   mode === "login"
-    ? { email, password }
-    : { name, email, password, role };
-
-
+    ? { email, password, turnstileToken }
+    : { name, email, password, role, turnstileToken };
 
 try {
   console.log("LOGIN FETCH:", API_URL, endpoint, body);
