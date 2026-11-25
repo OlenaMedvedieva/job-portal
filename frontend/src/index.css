@@ -4,7 +4,7 @@
 --bg: #FAF5FF;
 --border: #E9D5FF;
 --code-bg: #F3E8FF;
---accent: #4C1D95;
+--accent: #2563EB;
 --accent-bg: rgba(196, 181, 253, 0.18);
 --accent-border: rgba(139, 92, 246, 0.5);
 --social-bg: rgba(250, 245, 255, 0.7);
@@ -436,8 +436,8 @@ code {
 
 .landing-job-filters input:focus,
 .landing-job-filters select:focus {
-  border-color: #0d9488;
-  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+  border-color: #2563EB;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
 .landing-job-filters input::placeholder {
@@ -464,10 +464,10 @@ code {
 .landing-clear-filters {
   margin-top: 12px;
   padding: 10px 20px;
-  border: 1px solid #155e75;
+  border: 1px solid #2563EB;
   border-radius: 8px;
   background: transparent;
-  color: #155e75;
+  color: #2563EB;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -475,16 +475,16 @@ code {
 }
 
 .landing-clear-filters:hover {
-  background: #155e75;
+  background: #2563EB;
   color: #ffffff;
 }.landing-show-more {
   display: block;
   margin: 30px auto 10px;
   padding: 12px 30px;
-  border: 1px solid #155e75;
+  border: 1px solid #2563EB;
   border-radius: 9px;
   background: transparent;
-  color: #155e75;
+  color: #2563EB;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -492,7 +492,7 @@ code {
 }
 
 .landing-show-more:hover {
-  background: #155e75;
+  background: #2563EB;
   color: #ffffff;
 }
 .landing-results-count {

@@ -313,16 +313,24 @@ const toggleSavedJob = (jobId) => {
           Job Portal
         </Link>
 
-        <nav>
+       <nav>
           <a href="#latest-jobs">Latest Jobs</a>
           <a href="#how-it-works">How it works</a>
           <a href="#employers">For Employers</a>
-     <Link to="/dashboard?mode=login">Login</Link>
-     <Link to="/dashboard?mode=register">Register</Link>
+          {currentUserId ? (
+            <Link to="/dashboard" className="landing-primary-button">
+              My Page
+            </Link>
+          ) : (
+            <>
+              <Link to="/dashboard?mode=login">Login</Link>
+              <Link to="/dashboard?mode=register">Register</Link>
+            </>
+          )}
         </nav>
       </header>
 
-      <section className="landing-hero">
+   <section className="landing-hero">
         <div className="landing-hero-content">
           <span className="landing-label">
             FIND YOUR NEXT OPPORTUNITY
@@ -338,12 +346,18 @@ const toggleSavedJob = (jobId) => {
           </p>
 
           <div className="landing-buttons">
-           <Link
-            to="/dashboard?mode=register"
-            className="landing-primary-button"
-          >
-            Get Started
-            </Link>
+            {currentUserId ? (
+              <Link to="/dashboard" className="landing-primary-button">
+                Go to My Page
+              </Link>
+            ) : (
+              <Link
+                to="/dashboard?mode=register"
+                className="landing-primary-button"
+              >
+                Get Started
+              </Link>
+            )}
             <a href="#how-it-works" className="landing-secondary-button">
               Learn More
             </a>

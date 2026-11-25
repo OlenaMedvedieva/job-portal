@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useAuth from "../hooks/useAuth.js";
 import useJobs from "../hooks/useJobs.js";
-import { useNavigate , Link } from "react-router-dom";
+import { useNavigate , useSearchParams, Link } from "react-router-dom";
 import Login from "../components/Login.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import Register from "../components/Register.jsx";
@@ -19,6 +19,7 @@ import "../App.css";
 
 function Home() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 const [message, setMessage] = useState("");
 const [activeSection, setActiveSection] = useState("jobs");
 const [savedJobsByUser, setSavedJobsByUser] = useState(() => {
@@ -228,6 +229,13 @@ const {
   resendVerification,
   logout,
 } = useAuth();
+useEffect(() => {
+  const requestedMode = searchParams.get("mode");
+
+  if (requestedMode === "login" || requestedMode === "register") {
+    setMode(requestedMode);
+  }
+}, [searchParams, setMode]);
 
  const currentUserKey = user?.id ? String(user.id) : null;
 
@@ -375,7 +383,7 @@ const handleInviteCandidate = async (jobId, candidateId) => {
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M6 3h12v18l-6-4-6 4z" />
         </svg>
-        <span>Saved</span>
+        <span>Saved{savedJobIds.length > 0 ? ` (${savedJobIds.length})` : ""}</span>
       </button>
       <button
   type="button"
@@ -397,36 +405,48 @@ const handleInviteCandidate = async (jobId, candidateId) => {
     )}
 
     <div className="card">
- <h1>
-  {activeSection === "profile"
-    ? "My Page"
-    : activeSection === "saved"
-      ? "Saved Jobs"
-      : activeSection === "candidates"
-        ? "Find Candidates"
-        : activeSection === "applications"
-          ? "Applications"
-          : activeSection === "invitations"
-            ? "My Invitations"
-            : user?.role === "employer"
-              ? "My Jobs"
-              : "Find Your Dream Job"}
-  </h1>
-      <p className="subtitle">
-  {activeSection === "profile"
-    ? "Your professional profile and applications."
-    : activeSection === "saved"
-      ? "Your saved job opportunities."
-      : activeSection === "candidates"
-        ? "Discover candidates for your company."
-        : activeSection === "applications"
-          ? "Manage applications for your vacancies."
-          : activeSection === "invitations"
-            ? "Review and respond to invitations from employers."
-            : user?.role === "employer"
-              ? "Manage your posted vacancies."
-              : "Discover opportunities that match your skills and ambitions."}
-       </p>
+{user ? (
+        <div className="dashboard-header">
+          <div>
+            <h1>
+              {activeSection === "profile"
+                ? "My Page"
+                : activeSection === "saved"
+                  ? "Saved Jobs"
+                  : activeSection === "candidates"
+                    ? "Find Candidates"
+                    : activeSection === "applications"
+                      ? "Applications"
+                      : activeSection === "invitations"
+                        ? "My Invitations"
+                        : user?.role === "employer"
+                          ? "My Jobs"
+                          : "Find Your Dream Job"}
+            </h1>
+            <p className="subtitle">
+              {activeSection === "profile"
+                ? "Your professional profile and applications."
+                : activeSection === "saved"
+                  ? "Your saved job opportunities."
+                  : activeSection === "candidates"
+                    ? "Discover candidates for your company."
+                    : activeSection === "applications"
+                      ? "Manage applications for your vacancies."
+                      : activeSection === "invitations"
+                        ? "Review and respond to invitations from employers."
+                        : user?.role === "employer"
+                          ? "Manage your posted vacancies."
+                          : "Discover opportunities that match your skills and ambitions."}
+            </p>
+          </div>
+
+        </div>
+      ) : (
+        <>
+          <h1>Welcome to Job Portal</h1>
+          <p className="subtitle">Sign in or create an account to continue.</p>
+        </>
+      )}
 
       {user && user.role !== "employer" && activeSection === "jobs" && (
   < >  
@@ -542,6 +562,7 @@ const handleInviteCandidate = async (jobId, candidateId) => {
       setAppliedSearch(searchQuery);
       setAppliedLocation(locationFilter);
       setAppliedMinSalary(minSalary);
+      setAppliedCategory(categoryFilter);
     }}
   >
     <span aria-hidden="true">⌕</span>
@@ -728,8 +749,12 @@ saveProfile={async (overrides) => {
   onDeleteJob={(jobId) => deleteJob(jobId, setMessage)}
   isJobSaved={isJobSaved}
   onToggleSaved={toggleSavedJob}
-  emptyMessage="You haven’t saved any jobs yet."
-/>
+emptyMessage={
+    user?.role === "employer"
+      ? "You haven't posted any jobs yet."
+      : "No jobs match your filters."
+  }
+  />
   </>
 )}
 {activeSection === "saved" && (
